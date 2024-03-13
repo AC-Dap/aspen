@@ -7,7 +7,8 @@ import (
 )
 
 func enableCors(w *http.ResponseWriter) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	// TODO: Choose a more restrictive origin
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
 
 func testAPIHandler(w http.ResponseWriter, r *http.Request) {
@@ -19,5 +20,5 @@ func testAPIHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/api/test", testAPIHandler)
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":3001", nil))
 }
