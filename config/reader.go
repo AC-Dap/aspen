@@ -7,7 +7,7 @@ import (
 )
 
 func Read() ResourcesConfig {
-	configFile, err := os.ReadFile("resources.toml")
+	configFile, err := os.ReadFile("config/resources.toml")
 	if err != nil {
 		panic(err)
 	}
