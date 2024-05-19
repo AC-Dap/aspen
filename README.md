@@ -33,11 +33,18 @@ Each entry should be a single table under the `resources` table array, like so:
 [[resources]]
 name = "dashboard"
 route = "/dashboard"
-...
+#...
 
 [[resources]]
 name = "auth"
 route = "/auth"
-...
+#...
 ```
 **We require the existence of a `dashboard` and `auth` resource.**
+
+
+### Hot Reloading
+We allow the ability to hot reload the server. 
+To do so, we have one proxy server running in the front, and the actual routing server running behind.
+When we need to reload the config, we spin up another routing server, and point the proxy server towards that.
+We then ask the old routing server to shutdown via a channel from the proxy server.
