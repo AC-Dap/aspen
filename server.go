@@ -1,6 +1,7 @@
 package main
 
 import (
+	"dashboard/config"
 	"dashboard/integrations"
 	"fmt"
 	"log"
@@ -28,7 +29,7 @@ func main() {
 	http.HandleFunc("/api/test", testAPIHandler)
 	http.HandleFunc("/auth", testAuthHandler)
 
-	resources := GetResources()
+	resources := config.Read()
 	for _, resource := range resources.Resources {
 		log.Println(resource.Name)
 		log.Println("  Route:", resource.Route)
@@ -36,7 +37,7 @@ func main() {
 		log.Println("  Restricted:", resource.Restricted)
 	}
 
-	ValidateResources(resources)
+	config.Validate(resources)
 
 	nginx_conf := integrations.GenerateNginxConfig("8080", resources.Resources)
 	log.Println(nginx_conf)

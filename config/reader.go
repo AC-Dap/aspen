@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	. "dashboard/types"
@@ -6,8 +6,8 @@ import (
 	"os"
 )
 
-func GetResources() ResourcesConfig {
-	configFile, err := os.ReadFile("config/resources.toml")
+func Read() ResourcesConfig {
+	configFile, err := os.ReadFile("resources.toml")
 	if err != nil {
 		panic(err)
 	}
@@ -20,7 +20,7 @@ func GetResources() ResourcesConfig {
 	return resources
 }
 
-func ValidateResources(resources ResourcesConfig) {
+func Validate(resources ResourcesConfig) {
 	// Verify individual resource fields
 	for _, resource := range resources.Resources {
 		prefix := "Error in resource " + resource.Name + ": "
