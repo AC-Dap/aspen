@@ -3,7 +3,6 @@ package main
 import (
 	"dashboard/config"
 	"dashboard/routing"
-	"dashboard/types"
 	"dashboard/util"
 	"fmt"
 	"io"
@@ -18,9 +17,13 @@ var ProxyServer struct {
 	routerLock sync.RWMutex
 }
 
-func UpdateRouter(resources []types.Resource) error {
+func UpdateRouter() error {
 	// Start new routing server
-	newRouter := routing.NewServer(resources)
+	newRouter, err := routing.NewServer()
+	if err != nil {
+		log.Println("Error creating server:", err)
+		return err
+	}
 	addr, err := newRouter.Start()
 	if err != nil {
 		log.Println("Error starting server:", err)
@@ -92,22 +95,13 @@ func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
 
-func testAPIHandler(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
-	log.Println("Request received", r)
-	fmt.Fprintf(w, "Hello, World!")
-}
-
-func testAuthHandler(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
-	log.Println("Request received", r)
-	fmt.Fprintf(w, "Authorized!")
-}
-
 func main() {
 	// Read resources from config
-	resources := config.Read()
-	for _, resource := range resources.Resources {
+	resources, err := config.Read()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, resource := range resources {
 		log.Println(resource.Name)
 		log.Println("  Route:", resource.Route)
 		log.Println("  Source:", resource.Source)
@@ -118,7 +112,7 @@ func main() {
 
 	// Start routing server
 	log.Println("Starting routing server")
-	err := UpdateRouter(resources.Resources)
+	err = UpdateRouter()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -126,7 +120,7 @@ func main() {
 	// Start proxy server
 	log.Println("Starting proxy server")
 	server := http.Server{
-		Addr:    ":3001",
+		Addr:    ":8080",
 		Handler: http.HandlerFunc(ProxyToRouter),
 	}
 	log.Fatal(server.ListenAndServe())

@@ -1,7 +1,8 @@
 package routing
 
 import (
-	"dashboard/types"
+	"dashboard/auth"
+	"dashboard/config"
 	"dashboard/util"
 	"errors"
 	"fmt"
@@ -12,15 +13,26 @@ import (
 
 type Server struct {
 	srv       http.Server
-	resources []types.Resource
+	resources []config.Resource
+	users     []auth.User
 	quitChn   chan struct{}
 }
 
-func NewServer(resources []types.Resource) *Server {
+func NewServer() (*Server, error) {
+	resources, err := config.Read()
+	if err != nil {
+		return nil, err
+	}
+	users, err := auth.Read()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Server{
 		resources: resources,
+		users:     users,
 		quitChn:   make(chan struct{}),
-	}
+	}, nil
 }
 
 // Start
@@ -32,6 +44,11 @@ func (s *Server) Start() (string, error) {
 	serveMux := http.NewServeMux()
 	for _, resource := range s.resources {
 		log.Println("Adding handler for", resource.Name)
+		if resource.Name == "auth" {
+			auth.AddRoutes(resource.Route, serveMux, s.users)
+			continue
+		}
+
 		serveMux.HandleFunc(resource.Route, func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "%v\n\tSource:%v\n\tRestricted:%v", resource.Name, resource.Source, resource.Restricted)
 		})

@@ -1,4 +1,4 @@
-package types
+package config
 
 type Resource struct {
 	Name       string
@@ -7,6 +7,6 @@ type Resource struct {
 	Restricted bool
 }
 
-type ResourcesConfig struct {
+type ConfigTOML struct {
 	Resources []Resource
 }
