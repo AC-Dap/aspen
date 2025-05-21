@@ -1,7 +1,5 @@
-module dashboard
+module aspen
 
-go 1.22
+go 1.24.3
 
-require github.com/pelletier/go-toml/v2 v2.1.1
-
-require golang.org/x/crypto v0.23.0 // indirect
+require github.com/julienschmidt/httprouter v1.3.0
