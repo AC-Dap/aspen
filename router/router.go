@@ -4,27 +4,37 @@ import (
 	"aspen/resources"
 	"log"
 	"net/http"
+	"sync/atomic"
 
 	"github.com/julienschmidt/httprouter"
 )
 
-type Router struct {
-	router *httprouter.Router
+var GlobalRouter router
+
+// Aspen router. Kept private so all instances are made through GlobalRouter.
+type router struct {
+	router atomic.Pointer[httprouter.Router]
 }
 
-func (r *Router) Init(resources map[string]resources.Resource) {
-	r.router = httprouter.New()
+/*
+Creates a new router for the given set of resources and atomically swaps the current router for this new one.
+The map should map paths to resources.
+*/
+func UpdateRouter(resources map[string]resources.Resource) {
+	router := httprouter.New()
 
 	for path, resource := range resources {
-		resource.AddHandlers(path, r.router)
+		resource.AddHandlers(path, router)
 	}
+	GlobalRouter.router.Swap(router)
 }
 
-func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if r.router == nil {
+func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	router := r.router.Load()
+	if router == nil {
 		log.Fatal("Router is not initialized")
 	}
 
 	log.Printf("Request received: %s %s", req.Method, req.URL.Path)
-	r.router.ServeHTTP(w, req)
+	router.ServeHTTP(w, req)
 }

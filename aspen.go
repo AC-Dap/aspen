@@ -16,10 +16,9 @@ func main() {
 	}
 
 	// Init router
-	var router router.Router
-	router.Init(resources)
+	router.UpdateRouter(resources)
 
 	// Start server
 	log.Println("Starting server on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", &router))
+	log.Fatal(http.ListenAndServe(":8080", &router.GlobalRouter))
 }
