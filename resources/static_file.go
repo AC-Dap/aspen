@@ -1,37 +1,35 @@
 package resources
 
 import (
+	"aspen/router"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
 )
 
 type StaticFile struct {
-	id       string
 	filepath string
-	status   Status
+	router.BaseResource
 }
 
 func NewStaticFile(id string, filepath string) *StaticFile {
 	return &StaticFile{
-		id:       id,
 		filepath: filepath,
-		status:   NotStarted,
+		BaseResource: router.BaseResource{
+			Id:     id,
+			Status: router.NotStarted,
+		},
 	}
 }
 
 func (sr *StaticFile) Start() error {
-	sr.status = Started
+	sr.BaseResource.Status = router.Started
 	return nil
 }
 
 func (sr *StaticFile) Stop() error {
-	sr.status = Stopped
+	sr.BaseResource.Status = router.Stopped
 	return nil
-}
-
-func (sr *StaticFile) Status() Status {
-	return sr.status
 }
 
 /*

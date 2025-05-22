@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"aspen/router"
 	"net/http"
 	"os"
 	"strings"
@@ -9,14 +10,13 @@ import (
 )
 
 type StaticDirectory struct {
-	id     string
-	path   string
-	status Status
+	path string
 
 	// Allowed files to serve within this directory.
 	// Paths are relative to the base path, and '*' can be used to serve all files within a directory.
 	whitelist                []string
 	allow_directory_browsing bool
+	router.BaseResource
 }
 
 func NewStaticDirectory(id string, path string, whitelist []string, allow_directory_browsing bool) *StaticDirectory {
@@ -26,26 +26,24 @@ func NewStaticDirectory(id string, path string, whitelist []string, allow_direct
 	}
 
 	return &StaticDirectory{
-		id:                       id,
 		path:                     path,
-		status:                   NotStarted,
 		whitelist:                whitelist,
 		allow_directory_browsing: allow_directory_browsing,
+		BaseResource: router.BaseResource{
+			Id:     id,
+			Status: router.NotStarted,
+		},
 	}
 }
 
 func (sd *StaticDirectory) Start() error {
-	sd.status = Started
+	sd.BaseResource.Status = router.Started
 	return nil
 }
 
 func (sd *StaticDirectory) Stop() error {
-	sd.status = Stopped
+	sd.BaseResource.Status = router.Stopped
 	return nil
-}
-
-func (sd *StaticDirectory) Status() Status {
-	return sd.status
 }
 
 /*

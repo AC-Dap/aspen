@@ -1,4 +1,4 @@
-package resources
+package router
 
 import (
 	"github.com/julienschmidt/httprouter"
@@ -14,12 +14,26 @@ const (
 )
 
 type Resource interface {
+	GetID() string
+	GetStatus() Status
 	Start() error
 	Stop() error
-	Status() Status
 
 	/*
 		AddHandlers adds the resource's handlers to the router, under the given path.
 	*/
 	AddHandlers(path string, router *httprouter.Router) error
+}
+
+type BaseResource struct {
+	Id     string
+	Status Status
+}
+
+func (r *BaseResource) GetID() string {
+	return r.Id
+}
+
+func (r *BaseResource) GetStatus() Status {
+	return r.Status
 }

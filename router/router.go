@@ -1,7 +1,6 @@
 package router
 
 import (
-	"aspen/resources"
 	"log"
 	"net/http"
 	"sync/atomic"
@@ -20,10 +19,12 @@ type router struct {
 Creates a new router for the given set of resources and atomically swaps the current router for this new one.
 The map should map paths to resources.
 */
-func UpdateRouter(resources map[string]resources.Resource) {
+func UpdateRouter(resources map[string]Resource) {
 	router := httprouter.New()
 
+	log.Println("Updating router with resources:")
 	for path, resource := range resources {
+		log.Printf("  %s -> %s (%T)", path, resource.GetID(), resource)
 		resource.AddHandlers(path, router)
 	}
 	GlobalRouter.router.Swap(router)
