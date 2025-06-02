@@ -1,0 +1,30 @@
+[
+  {
+    "Route": "/info",
+    "Resource": {
+      "ResourceType": "static_file",
+      "Params": ["info", "README.md"]
+    }
+  },
+  {
+    "Route": "/design",
+    "Resource": {
+      "ResourceType": "static_file",
+      "Params": ["design", "design.md"]
+    }
+  },
+  {
+    "Route": "/code",
+    "Resource": {
+      "ResourceType": "directory",
+      "Params": ["resources", "resources", ["static_file.go"], false]
+    }
+  },
+  {
+    "Route": "/update",
+    "Resource": {
+      "ResourceType": "update_router",
+      "Params": ["update"]
+    }
+  }
+]

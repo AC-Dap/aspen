@@ -1,25 +1,49 @@
 package main
 
 import (
+	"aspen/config"
 	"aspen/resources"
 	"aspen/router"
+	"flag"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 )
 
+var serverPort = flag.Int("port", 8080, "the port to open this server on")
+
 func main() {
-	// Init resources
-	var resources = map[string]router.Resource{
-		"/info":   resources.NewStaticFile("info", "README.md"),
-		"/design": resources.NewStaticFile("design", "design.md"),
-		"/code":   resources.NewStaticDirectory("resources", "resources", []string{"static_file.go"}, false),
-		"/update": resources.NewUpdateRouterResource("update"),
+	// Init
+	resources.RegisterResources()
+	flag.Parse()
+
+	// Parse config path
+	if len(flag.Args()) == 0 {
+		log.Fatal("Error: Configuration file path is required. Usage: go run ./aspen.go [flags] <config-file>")
+	}
+	configPath := flag.Args()[0]
+
+	// Load config
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		log.Fatal("Error reading file: ", err)
+	}
+
+	config, err := config.ParseJSON(data)
+	if err != nil {
+		log.Fatal("Error parsing JSON: ", err)
+	}
+
+	resource_routes, err := config.ToResourceRoutes()
+	if err != nil {
+		log.Fatal("Error loading routes: ", err)
 	}
 
 	// Init router
-	router.UpdateRouter(resources)
+	router.UpdateRouter(resource_routes)
 
 	// Start server
-	log.Println("Starting server on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", &router.GlobalRouter))
+	log.Printf("Starting server on port %d", *serverPort)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *serverPort), &router.GlobalRouter))
 }
