@@ -24,8 +24,12 @@ func UpdateRouter(resources map[string]Resource) {
 
 	log.Println("Updating router with resources:")
 	for path, resource := range resources {
-		log.Printf("  %s -> %s (%T)", path, resource.GetID(), resource)
-		resource.AddHandlers(path, router)
+		err := resource.AddHandlers(path, router)
+		if err != nil {
+			log.Printf("  %s ⚠ Error adding handlers: %v", path, err)
+		} else {
+			log.Printf("  %s -> %s (%T)", path, resource.GetID(), resource)
+		}
 	}
 	GlobalRouter.router.Swap(router)
 }
