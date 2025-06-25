@@ -30,8 +30,8 @@
   {
     "Route": "/tak/*path",
     "Resource": {
-      "ResourceType": "redirect",
-      "Params": ["tak", "http://localhost:3000", "/*path"]
+      "ResourceType": "proxy",
+      "Params": ["tak", "http://localhost:3000", "/tak/*path", ["GET"]]
     }
   }
 ]

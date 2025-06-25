@@ -7,4 +7,5 @@ func RegisterResources() {
 	config.RegisterResourceConstructor("directory", NewStaticDirectory)
 	config.RegisterResourceConstructor("update_router", NewUpdateRouterResource)
 	config.RegisterResourceConstructor("redirect", NewRedirectResource)
+	config.RegisterResourceConstructor("proxy", NewProxyResource)
 }
