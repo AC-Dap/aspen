@@ -41,7 +41,7 @@ func main() {
 	}
 
 	// Init router
-	router.UpdateRouter(resource_routes)
+	router.UpdateRouter(router.NewRouterInstance([]router.Middleware{}, resource_routes))
 
 	// Start server
 	log.Printf("Starting server on port %d", *serverPort)

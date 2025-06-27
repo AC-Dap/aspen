@@ -21,9 +21,9 @@ func (r *TestResource) Stop() error {
 	return nil
 }
 
-func (r *TestResource) AddHandlers(path string, router *httprouter.Router) error {
+func (r *TestResource) AddHandlers(path string, router *router.RouterInstance) error {
 	response := []byte("Hello World!")
-	router.GET(path, func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	router.GET(path, r.BaseResource, func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 		w.Write(response)
 	})
 	return nil

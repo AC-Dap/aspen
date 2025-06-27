@@ -44,7 +44,7 @@ func BenchmarkRouter(b *testing.B) {
 	for _, path := range paths {
 		resources[path] = resource
 	}
-	router.UpdateRouter(resources)
+	router.UpdateRouter(router.NewRouterInstance([]router.Middleware{}, resources))
 
 	// Sample paths to get the requests we'll be benchmarking
 	requests := make([]int, 10000)

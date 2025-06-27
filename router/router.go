@@ -26,9 +26,9 @@ func NewRouterInstance(middleware []Middleware, resources map[string]Resource) *
 		router:     httprouter.New(),
 	}
 
-	log.Println("Initializing router with resources:")
+	log.Println("Initializing router instance with resources:")
 	for path, resource := range resources {
-		err := resource.AddHandlers(path, instance.router)
+		err := resource.AddHandlers(path, instance)
 		if err != nil {
 			log.Printf("  %s ⚠ Error adding handlers: %v", path, err)
 		} else {
@@ -45,6 +45,7 @@ func UpdateRouter(instance *RouterInstance) {
 	GlobalRouter.router.Swap(instance)
 }
 
+// ServeHTTP forwards the request to the current router instance to handle.
 func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	router := r.router.Load()
 	if router == nil {

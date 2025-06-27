@@ -40,7 +40,7 @@ func (pr *ProxyResource) Stop() error {
 	return nil
 }
 
-func (pr *ProxyResource) AddHandlers(path string, router *httprouter.Router) error {
+func (pr *ProxyResource) AddHandlers(path string, router *router.RouterInstance) error {
 	// Check that the proxy path and given path have matching variables
 	if !pr.path.IsProxyCompatible(utils.ParsePath(path)) {
 		return fmt.Errorf("proxy path %s is not compatible with redirect path %s", path, pr.path)
@@ -53,7 +53,7 @@ func (pr *ProxyResource) AddHandlers(path string, router *httprouter.Router) err
 
 	// Register the proxy handler for the specified methods
 	for _, method := range pr.methods {
-		router.Handle(method, path, func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+		router.Handle(method, path, pr.BaseResource, func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 			constructedPath := pr.host + pr.path.ConstructPath(ps)
 
 			// Create a new request to the destination host and path

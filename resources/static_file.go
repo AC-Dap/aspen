@@ -35,8 +35,8 @@ func (sr *StaticFile) Stop() error {
 /*
 Adds a single GET handler returning the static file under the given path.
 */
-func (sr *StaticFile) AddHandlers(path string, router *httprouter.Router) error {
-	router.GET(path, func(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+func (sr *StaticFile) AddHandlers(path string, router *router.RouterInstance) error {
+	router.GET(path, sr.BaseResource, func(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 		http.ServeFile(w, req, sr.filepath)
 	})
 	return nil

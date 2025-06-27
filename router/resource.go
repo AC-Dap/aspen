@@ -1,9 +1,5 @@
 package router
 
-import (
-	"github.com/julienschmidt/httprouter"
-)
-
 type Status int
 
 const (
@@ -22,7 +18,7 @@ type Resource interface {
 	/*
 		AddHandlers adds the resource's handlers to the router, under the given path.
 	*/
-	AddHandlers(path string, router *httprouter.Router) error
+	AddHandlers(path string, router *RouterInstance) error
 }
 
 type BaseResource struct {

@@ -49,7 +49,7 @@ func (sd *StaticDirectory) Stop() error {
 /*
 Adds handlers serving each of the static files in the whitelist under this directory. Uses the path as the base path.
 */
-func (sd *StaticDirectory) AddHandlers(path string, router *httprouter.Router) error {
+func (sd *StaticDirectory) AddHandlers(path string, router *router.RouterInstance) error {
 	for _, file := range sd.whitelist {
 		var reqpath string
 		if strings.HasSuffix(file, "*") {
@@ -59,7 +59,7 @@ func (sd *StaticDirectory) AddHandlers(path string, router *httprouter.Router) e
 			reqpath = path + "/" + file
 		}
 
-		router.GET(reqpath, func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+		router.GET(reqpath, sd.BaseResource, func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 			filepath := sd.path + "/" + req.URL.Path[len(path)+1:]
 
 			// Check if the file exists and we're allowed to serve it

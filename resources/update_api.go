@@ -2,9 +2,6 @@ package resources
 
 import (
 	"aspen/router"
-	"net/http"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 type UpdateRouterResource struct {
@@ -33,16 +30,6 @@ func (ur *UpdateRouterResource) Stop() error {
 /*
 Add a POST handler that listens for JSON of new resources to list.
 */
-func (ur *UpdateRouterResource) AddHandlers(path string, r *httprouter.Router) error {
-	r.POST(path, func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-		var resources = map[string]router.Resource{
-			"/info":   NewStaticFile("info", "README.md"),
-			"/design": NewStaticFile("design", "design.md"),
-			"/code":   NewStaticDirectory("resources", "resources", []string{"static_file.go"}, false),
-			"/go.mod": NewStaticFile("go_mod", "go.mod"),
-		}
-
-		router.UpdateRouter(resources)
-	})
+func (ur *UpdateRouterResource) AddHandlers(path string, r *router.RouterInstance) error {
 	return nil
 }
