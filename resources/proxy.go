@@ -18,15 +18,18 @@ type ProxyResource struct {
 	router.BaseResource
 }
 
-func NewProxyResource(id, host, path string, methods []string) *ProxyResource {
+type ProxyParams struct {
+	Host    string
+	Path    string
+	Methods []string
+}
+
+func NewProxyResource(base router.BaseResource, params ProxyParams) router.Resource {
 	return &ProxyResource{
-		host:    host,
-		path:    utils.ParsePath(path),
-		methods: methods,
-		BaseResource: router.BaseResource{
-			Id:     id,
-			Status: router.NotStarted,
-		},
+		host:         params.Host,
+		path:         utils.ParsePath(params.Path),
+		methods:      params.Methods,
+		BaseResource: base,
 	}
 }
 

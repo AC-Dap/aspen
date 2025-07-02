@@ -1,37 +1,57 @@
-[
-  {
-    "Route": "/info",
-    "Resource": {
-      "ResourceType": "static_file",
-      "Params": ["info", "README.md"]
+{
+  "Middleware": [],
+  "Routes": [
+    {
+      "Route": "/info",
+      "Id": "info",
+      "Resource": {
+        "ResourceType": "static_file",
+        "Params": {
+          "Filepath": "README.md"
+        }
+      }
+    },
+    {
+      "Route": "/design",
+      "Id": "design",
+      "Resource": {
+        "ResourceType": "static_file",
+        "Params": {
+          "Filepath": "design.md"
+        }
+      }
+    },
+    {
+      "Route": "/code",
+      "Id": "resources",
+      "Resource": {
+        "ResourceType": "directory",
+        "Params": {
+          "Path": "resources",
+          "Whitelist": ["*"],
+          "AllowDirectoryBrowsing": false
+        }
+      }
+    },
+    {
+      "Route": "/update",
+      "Id": "update",
+      "Resource": {
+        "ResourceType": "update_router",
+        "Params": {}
+      }
+    },
+    {
+      "Route": "/tak/*path",
+      "Id": "tak",
+      "Resource": {
+        "ResourceType": "proxy",
+        "Params": {
+          "Host": "http://localhost:3000",
+          "Path": "/tak/*path",
+          "Methods": ["GET"]
+        }
+      }
     }
-  },
-  {
-    "Route": "/design",
-    "Resource": {
-      "ResourceType": "static_file",
-      "Params": ["design", "design.md"]
-    }
-  },
-  {
-    "Route": "/code",
-    "Resource": {
-      "ResourceType": "directory",
-      "Params": ["resources", "resources", ["*"], false]
-    }
-  },
-  {
-    "Route": "/update",
-    "Resource": {
-      "ResourceType": "update_router",
-      "Params": ["update"]
-    }
-  },
-  {
-    "Route": "/tak/*path",
-    "Resource": {
-      "ResourceType": "proxy",
-      "Params": ["tak", "http://localhost:3000", "/tak/*path", ["GET"]]
-    }
-  }
-]
+  ]
+}

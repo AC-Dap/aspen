@@ -15,14 +15,16 @@ type RedirectResource struct {
 	router.BaseResource
 }
 
-func NewRedirectResource(id, host, path string) *RedirectResource {
+type RedirectParams struct {
+	Host string
+	Path string
+}
+
+func NewRedirectResource(base router.BaseResource, params RedirectParams) router.Resource {
 	return &RedirectResource{
-		host: host,
-		path: utils.ParsePath(path),
-		BaseResource: router.BaseResource{
-			Id:     id,
-			Status: router.NotStarted,
-		},
+		host:         params.Host,
+		path:         utils.ParsePath(params.Path),
+		BaseResource: base,
 	}
 }
 

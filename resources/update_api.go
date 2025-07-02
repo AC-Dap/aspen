@@ -8,12 +8,11 @@ type UpdateRouterResource struct {
 	router.BaseResource
 }
 
-func NewUpdateRouterResource(id string) *UpdateRouterResource {
+type UpdateRouterParams struct{}
+
+func NewUpdateRouterResource(base router.BaseResource, params UpdateRouterParams) router.Resource {
 	return &UpdateRouterResource{
-		BaseResource: router.BaseResource{
-			Id:     id,
-			Status: router.NotStarted,
-		},
+		BaseResource: base,
 	}
 }
 

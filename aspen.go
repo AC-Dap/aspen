@@ -35,7 +35,7 @@ func main() {
 		log.Fatal("Error parsing JSON: ", err)
 	}
 
-	resource_routes, err := config.ToResourceRoutes()
+	resource_routes, err := config.GetResourceRoutes()
 	if err != nil {
 		log.Fatal("Error loading routes: ", err)
 	}

@@ -19,20 +19,23 @@ type StaticDirectory struct {
 	router.BaseResource
 }
 
-func NewStaticDirectory(id string, path string, whitelist []string, allow_directory_browsing bool) *StaticDirectory {
+type StaticDirectoryParams struct {
+	Path                   string
+	Whitelist              []string
+	AllowDirectoryBrowsing bool
+}
+
+func NewStaticDirectory(base router.BaseResource, params StaticDirectoryParams) router.Resource {
 	// Include everything if we have an empty whitelist
-	if len(whitelist) == 0 {
-		whitelist = []string{"*"}
+	if len(params.Whitelist) == 0 {
+		params.Whitelist = []string{"*"}
 	}
 
 	return &StaticDirectory{
-		path:                     path,
-		whitelist:                whitelist,
-		allow_directory_browsing: allow_directory_browsing,
-		BaseResource: router.BaseResource{
-			Id:     id,
-			Status: router.NotStarted,
-		},
+		path:                     params.Path,
+		whitelist:                params.Whitelist,
+		allow_directory_browsing: params.AllowDirectoryBrowsing,
+		BaseResource:             base,
 	}
 }
 

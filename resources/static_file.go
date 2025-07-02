@@ -12,13 +12,14 @@ type StaticFile struct {
 	router.BaseResource
 }
 
-func NewStaticFile(id string, filepath string) *StaticFile {
+type StaticFileParams struct {
+	Filepath string
+}
+
+func NewStaticFile(base router.BaseResource, params StaticFileParams) router.Resource {
 	return &StaticFile{
-		filepath: filepath,
-		BaseResource: router.BaseResource{
-			Id:     id,
-			Status: router.NotStarted,
-		},
+		filepath:     params.Filepath,
+		BaseResource: base,
 	}
 }
 

@@ -1,11 +1,13 @@
 package resources
 
-import "aspen/config"
+import (
+	"aspen/config"
+)
 
 func RegisterResources() {
-	config.RegisterResourceConstructor("static_file", NewStaticFile)
-	config.RegisterResourceConstructor("directory", NewStaticDirectory)
-	config.RegisterResourceConstructor("update_router", NewUpdateRouterResource)
-	config.RegisterResourceConstructor("redirect", NewRedirectResource)
-	config.RegisterResourceConstructor("proxy", NewProxyResource)
+	config.RegisterResourceConstructor[StaticFileParams]("static_file", NewStaticFile)
+	config.RegisterResourceConstructor[StaticDirectoryParams]("directory", NewStaticDirectory)
+	config.RegisterResourceConstructor[UpdateRouterParams]("update_router", NewUpdateRouterResource)
+	config.RegisterResourceConstructor[RedirectParams]("redirect", NewRedirectResource)
+	config.RegisterResourceConstructor[ProxyParams]("proxy", NewProxyResource)
 }

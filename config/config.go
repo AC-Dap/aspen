@@ -6,23 +6,26 @@ import (
 	"fmt"
 )
 
-type Config []RouteConfig
+type Config struct {
+	Middleware []string
+	Routes     []RouteConfig
+}
 
-func ParseJSON(jsonBlob []byte) (Config, error) {
+func ParseJSON(jsonBlob []byte) (*Config, error) {
 	var config Config
 	err := json.Unmarshal(jsonBlob, &config)
 	if err != nil {
 		return nil, err
 	}
-	return config, nil
+	return &config, nil
 }
 
-func (c Config) ToResourceRoutes() (map[string]router.Resource, error) {
+func (c *Config) GetResourceRoutes() (map[string]router.Resource, error) {
 	var resource_routes = make(map[string]router.Resource)
-	for _, route := range c {
-		resource, err := route.Resource.Parse()
+	for _, route := range c.Routes {
+		resource, err := route.Parse()
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse resource: %w", err)
+			return nil, fmt.Errorf("unable to parse route: %w", err)
 		}
 		resource_routes[route.Route] = resource
 	}
