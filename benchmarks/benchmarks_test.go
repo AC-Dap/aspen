@@ -1,9 +1,8 @@
 package benchmarks
 
 import (
+	"aspen/logging"
 	"aspen/router"
-	"io"
-	"log"
 	"net/http"
 	"testing"
 )
@@ -26,7 +25,7 @@ func (m mockResponseWriter) WriteString(s string) (n int, err error) {
 func (m mockResponseWriter) WriteHeader(int) {}
 
 func init() {
-	log.SetOutput(io.Discard)
+	logging.DisableLogger()
 }
 
 func BenchmarkRouter(b *testing.B) {

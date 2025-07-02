@@ -1,11 +1,11 @@
 package router
 
 import (
-	"log"
 	"net/http"
 	"sync/atomic"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/rs/zerolog/log"
 )
 
 var GlobalRouter router
@@ -26,13 +26,13 @@ func NewRouterInstance(middleware []Middleware, resources map[string]Resource) *
 		router:     httprouter.New(),
 	}
 
-	log.Println("Initializing router instance with resources:")
+	log.Info().Msg("Initializing router instance with resources:")
 	for path, resource := range resources {
 		err := resource.AddHandlers(path, instance)
 		if err != nil {
-			log.Printf("  %s ⚠ Error adding handlers: %v", path, err)
+			log.Warn().Str("path", path).Err(err).Msg("Error adding handlers")
 		} else {
-			log.Printf("  %s -> %s (%T)", path, resource.GetID(), resource)
+			log.Info().Str("path", path).Str("id", resource.GetID()).Type("resource", resource).Send()
 		}
 	}
 
@@ -41,7 +41,7 @@ func NewRouterInstance(middleware []Middleware, resources map[string]Resource) *
 
 // UpdateRouter swaps the global router instance.
 func UpdateRouter(instance *RouterInstance) {
-	log.Println("Updating global router instance")
+	log.Info().Msg("Updating global router instance")
 	GlobalRouter.router.Swap(instance)
 }
 
@@ -49,10 +49,10 @@ func UpdateRouter(instance *RouterInstance) {
 func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	router := r.router.Load()
 	if router == nil {
-		log.Fatal("Router is not initialized")
+		log.Fatal().Msg("Router is not initialized")
 	}
 
-	log.Printf("Request received: %s %s", req.Method, req.URL.Path)
+	log.Info().Str("method", req.Method).Str("path", req.URL.Path).Msg("Request received")
 	router.router.ServeHTTP(w, req)
 }
 

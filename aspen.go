@@ -2,48 +2,54 @@ package main
 
 import (
 	"aspen/config"
+	"aspen/logging"
 	"aspen/resources"
 	"aspen/router"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 var serverPort = flag.Int("port", 8080, "the port to open this server on")
 
 func main() {
 	// Init
+	logging.InitializeLogger(zerolog.InfoLevel)
+	logging.AddConsoleOutput(true)
 	resources.RegisterResources()
 	flag.Parse()
 
 	// Parse config path
 	if len(flag.Args()) == 0 {
-		log.Fatal("Error: Configuration file path is required. Usage: go run ./aspen.go [flags] <config-file>")
+		log.Fatal().Msg("Error: Configuration file path is required. Usage: go run ./aspen.go [flags] <config-file>")
 	}
 	configPath := flag.Args()[0]
 
 	// Load config
 	data, err := os.ReadFile(configPath)
 	if err != nil {
-		log.Fatal("Error reading file: ", err)
+		log.Fatal().Err(err).Msg("Error reading file")
 	}
 
 	config, err := config.ParseJSON(data)
 	if err != nil {
-		log.Fatal("Error parsing JSON: ", err)
+		log.Fatal().Err(err).Msg("Error parsing JSON")
 	}
 
 	resource_routes, err := config.GetResourceRoutes()
 	if err != nil {
-		log.Fatal("Error loading routes: ", err)
+		log.Fatal().Err(err).Msg("Error loading routes")
 	}
 
 	// Init router
 	router.UpdateRouter(router.NewRouterInstance([]router.Middleware{}, resource_routes))
 
 	// Start server
-	log.Printf("Starting server on port %d", *serverPort)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *serverPort), &router.GlobalRouter))
+	log.Info().Int("port", *serverPort).Msg("Starting server")
+	err = http.ListenAndServe(fmt.Sprintf(":%d", *serverPort), &router.GlobalRouter)
+	log.Fatal().Err(err).Msg("Server closed")
 }
