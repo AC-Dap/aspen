@@ -3,6 +3,7 @@ package main
 import (
 	"aspen/config"
 	"aspen/logging"
+	"aspen/middleware"
 	"aspen/resources"
 	"aspen/router"
 	"flag"
@@ -46,7 +47,10 @@ func main() {
 	}
 
 	// Init router
-	router.UpdateRouter(router.NewRouterInstance([]router.Middleware{}, resource_routes))
+	router.UpdateRouter(router.NewRouterInstance(
+		[]router.Middleware{middleware.Logger{}},
+		resource_routes,
+	))
 
 	// Start server
 	log.Info().Int("port", *serverPort).Msg("Starting server")

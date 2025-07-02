@@ -52,7 +52,6 @@ func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		log.Fatal().Msg("Router is not initialized")
 	}
 
-	log.Info().Str("method", req.Method).Str("path", req.URL.Path).Msg("Request received")
 	router.router.ServeHTTP(w, req)
 }
 
