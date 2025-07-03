@@ -1,5 +1,5 @@
 {
-  "Middleware": [],
+  "Middleware": ["logger"],
   "Routes": [
     {
       "Route": "/info",

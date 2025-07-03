@@ -21,6 +21,7 @@ func main() {
 	// Init
 	logging.InitializeLogger(zerolog.InfoLevel)
 	logging.AddConsoleOutput(true)
+	middleware.RegisterMiddleware()
 	resources.RegisterResources()
 	flag.Parse()
 
@@ -41,6 +42,11 @@ func main() {
 		log.Fatal().Err(err).Msg("Error parsing JSON")
 	}
 
+	middleware, err := config.GetMiddleware()
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error loading middleware")
+	}
+
 	resource_routes, err := config.GetResourceRoutes()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error loading routes")
@@ -48,7 +54,7 @@ func main() {
 
 	// Init router
 	router.UpdateRouter(router.NewRouterInstance(
-		[]router.Middleware{middleware.Logger{}},
+		middleware,
 		resource_routes,
 	))
 

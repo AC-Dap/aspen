@@ -21,7 +21,7 @@ type ResourceContructor[P ResourceParams] = func(router.BaseResource, P) router.
 type ResourceParser = func(router.BaseResource, []byte) (router.Resource, error)
 type ResourceParsers = map[string]ResourceParser
 
-var globalResourceMap ResourceParsers = make(ResourceParsers)
+var globalResourceMap = make(ResourceParsers)
 
 func RegisterResourceConstructor[P ResourceParams](resourceType string, constructor ResourceContructor[P]) error {
 	// Check if this type alrady exists
