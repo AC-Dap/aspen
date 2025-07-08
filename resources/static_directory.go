@@ -39,16 +39,6 @@ func NewStaticDirectory(base router.BaseResource, params StaticDirectoryParams) 
 	}
 }
 
-func (sd *StaticDirectory) Start() error {
-	sd.BaseResource.Status = router.Started
-	return nil
-}
-
-func (sd *StaticDirectory) Stop() error {
-	sd.BaseResource.Status = router.Stopped
-	return nil
-}
-
 /*
 Adds handlers serving each of the static files in the whitelist under this directory. Uses the path as the base path.
 */

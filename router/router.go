@@ -17,16 +17,28 @@ type router struct {
 
 type RouterInstance struct {
 	middleware []Middleware
-	router     *httprouter.Router
+
+	// Maps service IDs to their respective Service instances.
+	servies map[string]*Service
+
+	// The actual HTTP router instance that handles requests.
+	router *httprouter.Router
 }
 
-func NewRouterInstance(middleware []Middleware, resources map[string]Resource) *RouterInstance {
+// Creates a new router instance with the provided middleware, services, and resources.
+func NewRouterInstance(middleware []Middleware, services []*Service, resources map[string]Resource) *RouterInstance {
 	instance := &RouterInstance{
 		middleware: middleware,
+		servies:    make(map[string]*Service),
 		router:     httprouter.New(),
 	}
 
-	log.Info().Msg("Initializing router instance with resources:")
+	// Map services by their ID
+	for _, service := range services {
+		instance.servies[service.GetID()] = service
+	}
+
+	log.Info().Msg("Creating resource handlers for new router instance:")
 	for path, resource := range resources {
 		err := resource.AddHandlers(path, instance)
 		if err != nil {
@@ -39,10 +51,16 @@ func NewRouterInstance(middleware []Middleware, resources map[string]Resource) *
 	return instance
 }
 
-// UpdateRouter swaps the global router instance.
+// UpdateRouter swaps the global router instance, and stops the old instance.
 func UpdateRouter(instance *RouterInstance) {
 	log.Info().Msg("Updating global router instance")
-	GlobalRouter.router.Swap(instance)
+	old := GlobalRouter.router.Swap(instance)
+	if old != nil {
+		log.Info().Msg("Stopping old router instance services")
+		if err := old.StopServices(); err != nil {
+			log.Error().Err(err).Msg("Error stopping old router instance services")
+		}
+	}
 }
 
 // ServeHTTP forwards the request to the current router instance to handle.
@@ -53,6 +71,22 @@ func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	router.router.ServeHTTP(w, req)
+}
+
+// GetService retrieves a service by its ID from the router instance.
+func (r *RouterInstance) GetService(id string) *Service {
+	return r.servies[id]
+}
+
+// StopServices calls Stop() on all services managed by the router instance.
+func (r *RouterInstance) StopServices() error {
+	for id, service := range r.servies {
+		if err := service.Stop(); err != nil {
+			log.Error().Str("service", id).Err(err).Msg("Error stopping service")
+			return err
+		}
+	}
+	return nil
 }
 
 // Handle assigns a resource and handler to a specific method and path.

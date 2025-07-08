@@ -33,16 +33,6 @@ func NewProxyResource(base router.BaseResource, params ProxyParams) router.Resou
 	}
 }
 
-func (pr *ProxyResource) Start() error {
-	pr.BaseResource.Status = router.Started
-	return nil
-}
-
-func (pr *ProxyResource) Stop() error {
-	pr.BaseResource.Status = router.Stopped
-	return nil
-}
-
 func (pr *ProxyResource) AddHandlers(path string, router *router.RouterInstance) error {
 	// Check that the proxy path and given path have matching variables
 	if !pr.path.IsProxyCompatible(utils.ParsePath(path)) {

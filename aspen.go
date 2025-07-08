@@ -55,6 +55,7 @@ func main() {
 	// Init router
 	router.UpdateRouter(router.NewRouterInstance(
 		middleware,
+		[]*router.Service{},
 		resource_routes,
 	))
 

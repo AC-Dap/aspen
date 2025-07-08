@@ -23,16 +23,6 @@ func NewStaticFile(base router.BaseResource, params StaticFileParams) router.Res
 	}
 }
 
-func (sr *StaticFile) Start() error {
-	sr.BaseResource.Status = router.Started
-	return nil
-}
-
-func (sr *StaticFile) Stop() error {
-	sr.BaseResource.Status = router.Stopped
-	return nil
-}
-
 /*
 Adds a single GET handler returning the static file under the given path.
 */

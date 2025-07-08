@@ -28,16 +28,6 @@ func NewRedirectResource(base router.BaseResource, params RedirectParams) router
 	}
 }
 
-func (rr *RedirectResource) Start() error {
-	rr.BaseResource.Status = router.Started
-	return nil
-}
-
-func (rr *RedirectResource) Stop() error {
-	rr.BaseResource.Status = router.Stopped
-	return nil
-}
-
 func (rr *RedirectResource) AddHandlers(path string, router *router.RouterInstance) error {
 	// Check that the proxy path and given path have matching variables
 	if !rr.path.IsProxyCompatible(utils.ParsePath(path)) {

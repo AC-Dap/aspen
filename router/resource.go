@@ -1,19 +1,7 @@
 package router
 
-type Status int
-
-const (
-	NotStarted Status = iota
-	Started
-	Stopping
-	Stopped
-)
-
 type Resource interface {
 	GetID() string
-	GetStatus() Status
-	Start() error
-	Stop() error
 
 	/*
 		AddHandlers adds the resource's handlers to the router, under the given path.
@@ -22,14 +10,16 @@ type Resource interface {
 }
 
 type BaseResource struct {
-	Id     string
-	Status Status
+	id string
+}
+
+// NewBaseResource creates a new BaseResource with the given ID.
+func NewBaseResource(id string) BaseResource {
+	return BaseResource{
+		id: id,
+	}
 }
 
 func (r *BaseResource) GetID() string {
-	return r.Id
-}
-
-func (r *BaseResource) GetStatus() Status {
-	return r.Status
+	return r.id
 }

@@ -13,7 +13,7 @@ type RouteConfig struct {
 
 func (rc RouteConfig) Parse() (router.Resource, error) {
 	// Create base resource
-	base := router.BaseResource{Id: rc.Id, Status: router.NotStarted}
+	base := router.NewBaseResource(rc.Id)
 
 	// Parse resource
 	newResource, err := rc.Resource.Parse(base)
