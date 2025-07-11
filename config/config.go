@@ -2,22 +2,13 @@ package config
 
 import (
 	"aspen/router"
-	"encoding/json"
 	"fmt"
 )
 
 type Config struct {
-	Middleware []MiddlewareConfig
-	Routes     []RouteConfig
-}
-
-func ParseJSON(jsonBlob []byte) (*Config, error) {
-	var config Config
-	err := json.Unmarshal(jsonBlob, &config)
-	if err != nil {
-		return nil, err
-	}
-	return &config, nil
+	LastUpdated int64
+	Middleware  []MiddlewareConfig
+	Routes      []RouteConfig
 }
 
 func (c *Config) GetMiddleware() ([]router.Middleware, error) {
@@ -44,4 +35,22 @@ func (c *Config) GetResourceRoutes() (map[string]router.Resource, error) {
 	}
 
 	return resource_routes, nil
+}
+
+func (c *Config) ToRouterInstance() (*router.RouterInstance, error) {
+	middleware, err := c.GetMiddleware()
+	if err != nil {
+		return nil, fmt.Errorf("error loading middleware: %w", err)
+	}
+
+	resource_routes, err := c.GetResourceRoutes()
+	if err != nil {
+		return nil, fmt.Errorf("error loading routes: %w", err)
+	}
+
+	return router.NewRouterInstance(
+		middleware,
+		[]*router.Service{},
+		resource_routes,
+	), nil
 }

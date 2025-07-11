@@ -9,7 +9,6 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -30,34 +29,19 @@ func main() {
 		log.Fatal().Msg("Error: Configuration file path is required. Usage: go run ./aspen.go [flags] <config-file>")
 	}
 	configPath := flag.Args()[0]
+	err := config.SetGlobalConfigFile(configPath)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error setting global config file")
+	}
 
 	// Load config
-	data, err := os.ReadFile(configPath)
+	instance, err := config.ParseGlobalConfig()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Error reading file")
-	}
-
-	config, err := config.ParseJSON(data)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Error parsing JSON")
-	}
-
-	middleware, err := config.GetMiddleware()
-	if err != nil {
-		log.Fatal().Err(err).Msg("Error loading middleware")
-	}
-
-	resource_routes, err := config.GetResourceRoutes()
-	if err != nil {
-		log.Fatal().Err(err).Msg("Error loading routes")
+		log.Fatal().Err(err).Msg("Error loading config")
 	}
 
 	// Init router
-	router.UpdateRouter(router.NewRouterInstance(
-		middleware,
-		[]*router.Service{},
-		resource_routes,
-	))
+	router.UpdateRouter(instance)
 
 	// Start server
 	log.Info().Int("port", *serverPort).Msg("Starting server")

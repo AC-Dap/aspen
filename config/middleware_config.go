@@ -19,6 +19,15 @@ func RegisterMiddleware(name string, middleware router.Middleware) error {
 	return nil
 }
 
+// AvailableMiddleware returns a list of all registered middleware names.
+func AvailableMiddleware() []string {
+	var names = make([]string, 0, len(globalMiddlewareMap))
+	for name := range globalMiddlewareMap {
+		names = append(names, name)
+	}
+	return names
+}
+
 func (m MiddlewareConfig) Parse() (router.Middleware, error) {
 	middleware, ok := globalMiddlewareMap[string(m)]
 	if !ok {
