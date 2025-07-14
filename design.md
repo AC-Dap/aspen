@@ -30,10 +30,11 @@ Aspen then deploys these servies as follows:
 
 In the code the lifecycle of a service is as follows:
 1. A `Service` struct is created by parsing the config file.
-2. Each service is built; this may or may not do anything, depending on whether the service has been built before.
-3. Each service is started, which runs the Docker container and maps the ports.
+2. The services are passed when creating a new router instance. This lets resources create handlers using the service ports and volumns.
+  - Note that services are not running yet!
+3. Each service is built; this may or may not do anything, depending on whether the service has been built before.
+4. Each service is started, which runs the Docker container and maps the ports.
   - If the service is already running, this does nothing.
-4. The running services are passed when creating a new router instance. This lets resources create handlers using the service ports and volumns.
 5. When the router is stopped, all running services are stopped and removed.
 
 One caveat is that a service may be referenced by an old and new router. To avoid stopping anything that is still in use, we keep track of the number of routers that are using a service. When a router is stopped, it decrements the count. Only once the count reaches zero will the service be stopped and removed.

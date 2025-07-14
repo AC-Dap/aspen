@@ -1,9 +1,14 @@
-package router
+package service
 
 import (
+	"aspen/external/git"
 	"fmt"
 	"sync"
 )
+
+// runningServices tracks ref counts of services that are currently running, determined by their ID and hash.
+var runningServices = make(map[string]map[string]int)
+var runningServicesLock sync.Mutex
 
 type Status int
 
@@ -17,30 +22,26 @@ const (
 	Stopped
 )
 
-// runningServices tracks ref counts of services that are currently running, determined by their ID and hash.
-var runningServices = make(map[string]map[string]int)
-var runningServicesLock sync.Mutex
-
 type Service struct {
 	id     string
 	status Status
 
-	// Link to git repo that contains the service code
-	source string
+	// Remote git repo that contains the service code
+	repo git.Repo
 
 	buildCommand string
 	startCommand string
 
-	// Hash of the service version + build/start commands, to detect changes
+	// Hash of the repo + build/start commands, to detect changes
 	// Calculated when the service is built
 	hash string
 }
 
-func NewService(id, source, buildCommand, startCommand string) *Service {
+func NewService(id, remote, commitHash, buildCommand, startCommand string) *Service {
 	return &Service{
 		id:           id,
 		status:       NotInitialized,
-		source:       source,
+		repo:         git.NewRepo(getServiceFolder(id), remote, commitHash),
 		buildCommand: buildCommand,
 		startCommand: startCommand,
 	}
@@ -63,8 +64,19 @@ func (s *Service) Build() error {
 	}
 
 	s.status = Building
+
 	// TODO: Implement actual build logic here, e.g., cloning the repo, running build commands, etc.
 	// TODO: Also calculate hash
+
+	// First clone repo if it's not up to date
+	if !s.repo.Updated() {
+		s.repo.Clone()
+	}
+
+	// Run docker build in repo
+
+	// Calculate hash
+
 	s.status = Built
 	return nil
 }

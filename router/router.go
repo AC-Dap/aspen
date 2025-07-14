@@ -1,6 +1,7 @@
 package router
 
 import (
+	"aspen/router/service"
 	"net/http"
 	"sync/atomic"
 
@@ -19,23 +20,23 @@ type RouterInstance struct {
 	middleware []Middleware
 
 	// Maps service IDs to their respective Service instances.
-	servies map[string]*Service
+	services map[string]*service.Service
 
 	// The actual HTTP router instance that handles requests.
 	router *httprouter.Router
 }
 
 // Creates a new router instance with the provided middleware, services, and resources.
-func NewRouterInstance(middleware []Middleware, services []*Service, resources map[string]Resource) *RouterInstance {
+func NewRouterInstance(middleware []Middleware, services []*service.Service, resources map[string]Resource) *RouterInstance {
 	instance := &RouterInstance{
 		middleware: middleware,
-		servies:    make(map[string]*Service),
+		services:   make(map[string]*service.Service),
 		router:     httprouter.New(),
 	}
 
 	// Map services by their ID
 	for _, service := range services {
-		instance.servies[service.GetID()] = service
+		instance.services[service.GetID()] = service
 	}
 
 	log.Info().Msg("Creating resource handlers for new router instance:")
@@ -74,13 +75,43 @@ func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // GetService retrieves a service by its ID from the router instance.
-func (r *RouterInstance) GetService(id string) *Service {
-	return r.servies[id]
+func (r *RouterInstance) GetService(id string) *service.Service {
+	return r.services[id]
+}
+
+// BuildServices builds each service for this router instance.
+func (r *RouterInstance) BuildServices() error {
+	for id, service := range r.services {
+		if err := service.Build(); err != nil {
+			log.Error().Str("service", id).Err(err).Msg("Error building service")
+			return err
+		}
+	}
+	return nil
+}
+
+// StartServices starts each service for this router instance.
+func (r *RouterInstance) StartServices() error {
+	for id, service := range r.services {
+		if err := service.Start(); err != nil {
+			log.Error().Str("service", id).Err(err).Msg("Error starting service")
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *RouterInstance) BuildAndStartServices() error {
+	err := r.BuildServices()
+	if err == nil {
+		err = r.StartServices()
+	}
+	return err
 }
 
 // StopServices calls Stop() on all services managed by the router instance.
 func (r *RouterInstance) StopServices() error {
-	for id, service := range r.servies {
+	for id, service := range r.services {
 		if err := service.Stop(); err != nil {
 			log.Error().Str("service", id).Err(err).Msg("Error stopping service")
 			return err

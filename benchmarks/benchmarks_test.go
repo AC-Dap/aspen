@@ -3,6 +3,7 @@ package benchmarks
 import (
 	"aspen/logging"
 	"aspen/router"
+	"aspen/router/service"
 	"net/http"
 	"testing"
 )
@@ -42,7 +43,7 @@ func BenchmarkRouter(b *testing.B) {
 	}
 	router.UpdateRouter(router.NewRouterInstance(
 		[]router.Middleware{},
-		[]*router.Service{},
+		[]*service.Service{},
 		resources,
 	))
 

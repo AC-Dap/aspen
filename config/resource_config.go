@@ -45,7 +45,7 @@ func RegisterResourceConstructor[P ResourceParams](resourceType string, construc
 		return constructor(base, params), nil
 	}
 
-	log.Info().Str("resource", resourceType).Msg("Registered resource constructor")
+	log.Debug().Str("resource", resourceType).Msg("Registered resource constructor")
 	globalResourceMap[resourceType] = parser
 	return nil
 }

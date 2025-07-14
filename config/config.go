@@ -2,6 +2,7 @@ package config
 
 import (
 	"aspen/router"
+	"aspen/router/service"
 	"fmt"
 )
 
@@ -50,7 +51,7 @@ func (c *Config) ToRouterInstance() (*router.RouterInstance, error) {
 
 	return router.NewRouterInstance(
 		middleware,
-		[]*router.Service{},
+		[]*service.Service{},
 		resource_routes,
 	), nil
 }

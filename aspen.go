@@ -6,6 +6,7 @@ import (
 	"aspen/middleware"
 	"aspen/resources"
 	"aspen/router"
+	"aspen/router/service"
 	"flag"
 	"fmt"
 	"net/http"
@@ -15,14 +16,18 @@ import (
 )
 
 var serverPort = flag.Int("port", 8080, "the port to open this server on")
+var serviceFolder = flag.String("services", "./services", "the folder to place service files in")
 
 func main() {
 	// Init
-	logging.InitializeLogger(zerolog.InfoLevel)
+	logging.InitializeLogger(zerolog.DebugLevel)
 	logging.AddConsoleOutput(true)
 	middleware.RegisterMiddleware()
 	resources.RegisterResources()
 	flag.Parse()
+
+	// Set service folder
+	service.SetGlobalFolder(*serviceFolder)
 
 	// Parse config path
 	if len(flag.Args()) == 0 {
@@ -38,6 +43,12 @@ func main() {
 	instance, err := config.ParseGlobalConfig()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error loading config")
+	}
+
+	// Start instance
+	err = instance.BuildAndStartServices()
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error starting services")
 	}
 
 	// Init router

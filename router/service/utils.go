@@ -1,4 +1,4 @@
-package router
+package service
 
 func (s Status) String() string {
 	switch s {
