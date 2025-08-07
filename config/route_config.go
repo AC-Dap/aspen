@@ -6,8 +6,8 @@ import (
 )
 
 type RouteConfig struct {
-	Route    string
 	Id       string
+	Route    string
 	Resource ResourceConfig
 }
 
