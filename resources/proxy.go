@@ -36,7 +36,7 @@ func NewProxyResource(base router.BaseResource, params ProxyParams) router.Resou
 func (pr *ProxyResource) AddHandlers(path string, router *router.RouterInstance) error {
 	// Check that the proxy path and given path have matching variables
 	if !pr.path.IsProxyCompatible(utils.ParsePath(path)) {
-		return fmt.Errorf("proxy path %s is not compatible with redirect path %s", path, pr.path)
+		return fmt.Errorf("proxy path '%s' is not compatible with redirect path '%s'", path, pr.path)
 	}
 
 	// Every proxy request uses the same client (safe for concurrent use)

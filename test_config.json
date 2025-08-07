@@ -24,9 +24,21 @@
       "Resource": {
         "ResourceType": "directory",
         "Params": {
-          "AllowDirectoryBrowsing": false,
-          "Path": "resources",
+          "AllowDirectoryBrowsing": true,
+          "Path": "services/test",
           "Whitelist": ["*"]
+        }
+      }
+    },
+    {
+      "Route": "/test/*path",
+      "Id": "test-resource",
+      "Resource": {
+        "ResourceType": "proxy",
+        "Params": {
+          "Host": "http://localhost",
+          "Methods": ["GET"],
+          "Path": "/*path"
         }
       }
     },
@@ -46,6 +58,13 @@
           "Path": "/tak/*path"
         }
       }
+    }
+  ],
+  "Services": [
+    {
+      "Id": "test",
+      "Remote": "https://github.com/docker/getting-started-todo-app.git",
+      "CommitHash": "42585d57bbbbe3f576dae92c8d57c5761a6bec7a"
     }
   ]
 }

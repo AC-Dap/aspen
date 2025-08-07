@@ -2,6 +2,7 @@ package router
 
 import (
 	"aspen/router/service"
+	"fmt"
 	"net/http"
 	"sync/atomic"
 
@@ -74,6 +75,18 @@ func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	router.router.ServeHTTP(w, req)
 }
 
+func (r *router) Shutdown() error {
+	log.Info().Msg("Shutting down global router instance")
+	router := r.router.Swap(nil)
+	if router != nil {
+		if err := router.StopServices(); err != nil {
+			return fmt.Errorf("error stopping services during shutdown: %v", err)
+		}
+	}
+
+	return nil
+}
+
 // GetService retrieves a service by its ID from the router instance.
 func (r *RouterInstance) GetService(id string) *service.Service {
 	return r.services[id]
@@ -83,8 +96,7 @@ func (r *RouterInstance) GetService(id string) *service.Service {
 func (r *RouterInstance) BuildServices() error {
 	for id, service := range r.services {
 		if err := service.Build(); err != nil {
-			log.Error().Str("service", id).Err(err).Msg("Error building service")
-			return err
+			return fmt.Errorf("error building service %s: %w", id, err)
 		}
 	}
 	return nil
@@ -94,13 +106,13 @@ func (r *RouterInstance) BuildServices() error {
 func (r *RouterInstance) StartServices() error {
 	for id, service := range r.services {
 		if err := service.Start(); err != nil {
-			log.Error().Str("service", id).Err(err).Msg("Error starting service")
-			return err
+			return fmt.Errorf("error starting service %s: %w", id, err)
 		}
 	}
 	return nil
 }
 
+// BuildAndStartServices builds and starts all services managed by the router instance.
 func (r *RouterInstance) BuildAndStartServices() error {
 	err := r.BuildServices()
 	if err == nil {
@@ -113,8 +125,7 @@ func (r *RouterInstance) BuildAndStartServices() error {
 func (r *RouterInstance) StopServices() error {
 	for id, service := range r.services {
 		if err := service.Stop(); err != nil {
-			log.Error().Str("service", id).Err(err).Msg("Error stopping service")
-			return err
+			return fmt.Errorf("error stopping service %s: %w", id, err)
 		}
 	}
 	return nil

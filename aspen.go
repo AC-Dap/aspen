@@ -7,9 +7,13 @@ import (
 	"aspen/resources"
 	"aspen/router"
 	"aspen/router/service"
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -54,8 +58,39 @@ func main() {
 	// Init router
 	router.UpdateRouter(instance)
 
+	// Add handler for ctrl-c shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+
 	// Start server
 	log.Info().Int("port", *serverPort).Msg("Starting server")
-	err = http.ListenAndServe(fmt.Sprintf(":%d", *serverPort), &router.GlobalRouter)
-	log.Fatal().Err(err).Msg("Server closed")
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%d", *serverPort),
+		Handler: &router.GlobalRouter,
+	}
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal().Err(err).Msg("Server failed")
+		}
+	}()
+
+	// Wait for signal
+	sig := <-quit
+	log.Info().Str("signal", sig.String()).Msg("Received shutdown signal")
+
+	// Shutdown server and services
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = server.Shutdown(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("Error shutting down server")
+	}
+
+	err = router.GlobalRouter.Shutdown()
+	if err != nil {
+		log.Error().Err(err).Msg("Error stopping services")
+	}
+
+	log.Info().Msg("Server shutdown complete")
 }
