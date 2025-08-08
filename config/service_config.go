@@ -9,5 +9,5 @@ type ServiceConfig struct {
 }
 
 func (sc ServiceConfig) Parse() (*service.Service, error) {
-	return service.NewService(sc.Id, sc.Remote, sc.CommitHash, "docker compose build", "docker compose up -d", "docker compose down"), nil
+	return service.NewService(sc.Id, sc.Remote, sc.CommitHash), nil
 }
