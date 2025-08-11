@@ -1,6 +1,7 @@
 package main
 
 import (
+	"aspen/auth"
 	"aspen/config"
 	"aspen/logging"
 	"aspen/middleware"
@@ -21,6 +22,7 @@ import (
 
 var serverPort = flag.Int("port", 8080, "the port to open this server on")
 var serviceFolder = flag.String("services", "./services", "the folder to place service files in")
+var authFile = flag.String("auth", "auth.sqlite", "the file to use for authentication storage")
 
 func main() {
 	// Init
@@ -30,6 +32,14 @@ func main() {
 	resources.RegisterResources()
 	flag.Parse()
 
+	err := auth.Initialize(*authFile)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error initializing authentication")
+	} else {
+		log.Info().Msg("Authentication initialized successfully")
+	}
+	return
+
 	// Set service folder
 	service.SetGlobalFolder(*serviceFolder)
 
@@ -38,7 +48,7 @@ func main() {
 		log.Fatal().Msg("Error: Configuration file path is required. Usage: go run ./aspen.go [flags] <config-file>")
 	}
 	configPath := flag.Args()[0]
-	err := config.SetGlobalConfigFile(configPath)
+	err = config.SetGlobalConfigFile(configPath)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error setting global config file")
 	}

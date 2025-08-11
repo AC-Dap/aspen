@@ -53,3 +53,67 @@ One caveat is that a service may be referenced by an old and new router. To avoi
 Aspen supports middleware that can be used to process requests before they reach the resource handlers. Middleware can be used to perform tasks such as authentication, logging, and request modification.
 
 Middleware is applied to **every request** on **every route**. This means that middleware should try and be as efficient as possible, and should not perform any blocking operations. Middleware can be used to modify the request or response, or to perform any other necessary processing.
+
+## Authentication
+
+Aspen has a built-in authentication system that can be used to secure access to resources. Users are assigned roles; from there routes can be configured to only allow users with **specific roles**.
+
+To do this, we track users, their passwords and salt, and roles in a Sqlite database. When users log in, we then grant them an **access token** that is used to authenticate requests. This access token is stored in a secure cookie, and is sent with every request to the server. The authentication middleware then checks the access token and verifies that the user has the necessary permissions to access the requested resource.
+
+The flow of authentication is as follows:
+1. User logs in with username and password.
+2. Aspen checks the username and password against the database.
+3. If the credentials are valid, Aspen generates an access token and stores it in the database.
+  - Access tokens **do not expire**; they are valid until the user logs out or the token is revoked.
+4. The access token is sent to the client as a secure cookie.
+  - `SameSite=Strict; Secure; HttpOnly`
+5. The client sends the access token with every request to the server.
+6. The authentication middleware checks the access token and verifies that its corresponding user has the necessary permissions to access the requested resource.
+7. If the user has the necessary permissions, the request is allowed to proceed to the resource handler.
+8. If the user does not have the necessary permissions, the user is redirected to the login page or an error is returned.
+
+The above flow uses a permanent access token that does not expire. This simplifies the authentication process, allowing it to work with GET requests that may be performed automatically by the browser, or any other requests where the client code does not have control over the authentication flow. However, the authentication system also supports the more complex and secure OAuth2 protocol, which can be used by resources if they require it. This flow works as follows:
+1. The access token is used as a **refresh token** to obtain a short-lived OAuth2 token. Each OAuth2 token is tied to a **single role**, and lasts for a limited time (e.g., 1 hour).
+2. The client requests a new OAuth2 token by sending the refresh token, its desired role, and a **nonce** to the server.
+3. The server verifies the refresh token and nonce, and returns a new OAuth2 token tied to the given role.
+  - This nonce is then stored to prevent replay attacks.
+4. In future requests, the client sends the concatenated string `<OAuth2 token>|<nonce>` in the `Authorization` header.
+  - We don't use secure cookies here, since the client may use multiple OAuth2 tokens for different roles.
+5. The servier verifies the OAuth2 token and nonce, and checks that the relevant role is correct.
+  - This nonce is then stored to prevent replay attacks.
+
+### Database design
+
+`Users` table:
+- `username`: Unique username for the user, primary key
+- `password`: Hashed password for the user
+- `salt`: Salt used for hashing the password
+
+`Roles` table:
+- `username`: Foreign key to `Users`
+- `role`: Role assigned to the user, e.g., "admin", "user", etc.
+- Primary key is `(username, role)` composite
+- Can have many roles per user
+
+`AccessTokens` table:
+- `username`: Foreign key to `Users`
+- `token`: Permanent access token for the user, used for authentication
+- `created_at`: Timestamp when the access token was created
+- Primary key is `(username, token)` composite
+
+`OAuth2Tokens` table:
+- `username`: Foreign key to `Users`
+- `token`: Unique OAuth2 token, primary key
+- `role`: Role associated with the OAuth2 token
+- `created_at`: Timestamp when the OAuth2 token was created
+- Primary key is `(username, token)` composite
+
+`AccessTokenNonces` table:
+- `token`: Foreign key to `AccessTokens`
+- `nonce`: Nonce used to prevent replay attacks
+- Primary key is `(token, nonce)` composite
+
+`OAuth2TokenNonces` table:
+- `token`: Foreign key to `OAuth2Tokens`
+- `nonce`: Nonce used to prevent replay attacks
+- Primary key is `(token, nonce)` composite
