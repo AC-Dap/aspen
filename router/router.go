@@ -136,8 +136,7 @@ func (r *RouterInstance) Handle(method, path string, resource BaseResource, hand
 	handleWithMiddleware := func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 		// Execute middleware in the order they were added
 		for _, middleware := range r.middleware {
-			if err, err_code := middleware.Handle(resource, w, req, ps); err != nil {
-				http.Error(w, err.Error(), err_code)
+			if cont := middleware.Handle(resource, w, req, ps); !cont {
 				return
 			}
 		}

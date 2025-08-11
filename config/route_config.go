@@ -6,14 +6,15 @@ import (
 )
 
 type RouteConfig struct {
-	Id       string
-	Route    string
-	Resource ResourceConfig
+	Id          string
+	Route       string
+	AccessRoles []string
+	Resource    ResourceConfig
 }
 
 func (rc RouteConfig) Parse() (router.Resource, error) {
 	// Create base resource
-	base := router.NewBaseResource(rc.Id)
+	base := router.NewBaseResource(rc.Id, rc.AccessRoles)
 
 	// Parse resource
 	newResource, err := rc.Resource.Parse(base)

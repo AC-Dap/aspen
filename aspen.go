@@ -38,7 +38,6 @@ func main() {
 	} else {
 		log.Info().Msg("Authentication initialized successfully")
 	}
-	return
 
 	// Set service folder
 	service.SetGlobalFolder(*serviceFolder)

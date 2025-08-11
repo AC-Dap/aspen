@@ -32,7 +32,7 @@ func init() {
 func BenchmarkRouter(b *testing.B) {
 	rng := GetRNG()
 	resource := &TestResource{
-		BaseResource: router.NewBaseResource("test"),
+		BaseResource: router.NewBaseResource("test", []string{}),
 	}
 
 	// Set up router with paths

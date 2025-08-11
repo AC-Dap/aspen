@@ -1,12 +1,12 @@
 {
   "LastUpdated": 100,
-  "Middleware": ["logger"],
+  "Middleware": [{ "Type": "logger", "Params": {} }],
   "Routes": [
     {
       "Route": "/info",
       "Id": "info",
       "Resource": {
-        "ResourceType": "static_file",
+        "Type": "static_file",
         "Params": { "Filepath": "README.md" }
       }
     },
@@ -14,7 +14,7 @@
       "Route": "/design",
       "Id": "design",
       "Resource": {
-        "ResourceType": "static_file",
+        "Type": "static_file",
         "Params": { "Filepath": "design.md" }
       }
     },
@@ -22,7 +22,7 @@
       "Route": "/code",
       "Id": "resources",
       "Resource": {
-        "ResourceType": "directory",
+        "Type": "directory",
         "Params": {
           "AllowDirectoryBrowsing": true,
           "Path": "services/test",
@@ -34,7 +34,7 @@
       "Route": "/test/*path",
       "Id": "test-resource",
       "Resource": {
-        "ResourceType": "proxy",
+        "Type": "proxy",
         "Params": {
           "Host": "http://localhost",
           "Methods": ["GET"],
@@ -45,13 +45,13 @@
     {
       "Route": "/api",
       "Id": "api",
-      "Resource": { "ResourceType": "api", "Params": {} }
+      "Resource": { "Type": "api", "Params": {} }
     },
     {
       "Route": "/tak/*path",
       "Id": "tak",
       "Resource": {
-        "ResourceType": "proxy",
+        "Type": "proxy",
         "Params": {
           "Host": "http://localhost:3000",
           "Methods": ["GET"],

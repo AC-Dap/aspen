@@ -9,8 +9,8 @@ import (
 )
 
 type ResourceConfig struct {
-	ResourceType string
-	Params       map[string]any
+	Type   string
+	Params map[string]any
 }
 
 // Resources define arbitrary parameters, so the best we can do is `any`.
@@ -69,19 +69,19 @@ func GetResourceParams(resourceType string) (ResourceParams, error) {
 }
 
 func (rc ResourceConfig) Parse(base router.BaseResource) (router.Resource, error) {
-	parser, ok := globalResourceMap[rc.ResourceType]
+	parser, ok := globalResourceMap[rc.Type]
 	if !ok {
-		return nil, fmt.Errorf("unable to find \"%s\" resource constructor", rc.ResourceType)
+		return nil, fmt.Errorf("unable to find \"%s\" resource constructor", rc.Type)
 	}
 
 	// Try parsing
 	rawParams, err := json.Marshal(rc.Params)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read \"%s\" parameters", rc.ResourceType)
+		return nil, fmt.Errorf("unable to read \"%s\" parameters", rc.Type)
 	}
 	newResource, err := parser(base, rawParams)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse \"%s\" parameters", rc.ResourceType)
+		return nil, fmt.Errorf("unable to parse \"%s\" parameters", rc.Type)
 	}
 
 	return newResource, nil
