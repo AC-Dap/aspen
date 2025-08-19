@@ -2,38 +2,41 @@ package auth
 
 import (
 	"fmt"
+	"time"
 )
 
-// CreateToken creates an access token for the given user
-func CreateToken(username string) error {
+const TokenLifespan = (30 * 24 * time.Hour)
+
+// LoginUser creates an access token for the given user
+func LoginUser(username string) (string, error) {
 	conn, cleanup, err := getConnection()
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer cleanup()
 
 	// Generate access token
-	token, err := GenerateAccessToken()
+	token, err := generateAccessToken()
 	if err != nil {
-		return fmt.Errorf("failed to generate access token: %w", err)
+		return "", fmt.Errorf("failed to generate access token: %w", err)
 	}
 
 	stmt := conn.Prep(`
 		INSERT INTO access_tokens (user_id, token)
-		SELECT user_id
+		SELECT user_id, ?
 		FROM users
 		WHERE username = ?
-		VALUES (user_id, ?)
 	`)
-	stmt.BindText(1, username)
-	stmt.BindText(2, token)
+	stmt.BindText(1, token)
+	stmt.BindText(2, username)
+	defer stmt.Finalize()
 
 	_, err = stmt.Step()
 	if err != nil {
-		return fmt.Errorf("failed to store access token: %w", err)
+		return "", fmt.Errorf("failed to store access token: %w", err)
 	}
 
-	return nil
+	return token, nil
 }
 
 // VerifyAccessToken checks if an access token is valid and its user has the required role
@@ -49,18 +52,28 @@ func VerifyAccessToken(token, role string) (bool, error) {
 	defer cleanup()
 
 	stmt := conn.Prep(`
-		SELECT 1
+		SELECT created_at
 		FROM access_tokens at
-		JOIN roles r ON at.user_id = r.user_id
-		WHERE at.token = ? AND r.role = ?
+		JOIN user_roles ur ON at.user_id = ur.user_id
+		WHERE at.token = ? AND ur.role = ?
 	`)
 	stmt.BindText(1, token)
 	stmt.BindText(2, role)
+	defer stmt.Finalize()
 
 	if hasRow, err := stmt.Step(); err != nil {
 		return false, fmt.Errorf("failed to verify access token: %w", err)
 	} else if !hasRow {
 		return false, fmt.Errorf("invalid access token")
+	}
+
+	// Check that token is not too old
+	createdAt, err := parseTimestamp(stmt.ColumnText(0))
+	if err != nil {
+		return false, fmt.Errorf("failed to parse timestamp: %w", err)
+	}
+	if createdAt.Add(TokenLifespan).Before(time.Now()) {
+		return false, LogoutUser(token)
 	}
 
 	return true, nil
@@ -80,6 +93,7 @@ func LogoutUser(token string) error {
 
 	stmt := conn.Prep(`DELETE FROM access_tokens WHERE token = ?`)
 	stmt.BindText(1, token)
+	defer stmt.Finalize()
 
 	_, err = stmt.Step()
 	if err != nil {
@@ -102,6 +116,7 @@ func RevokeAllAccessTokens(username string) error {
 		WHERE user_id = (SELECT user_id FROM users WHERE username = ?)
 	`)
 	stmt.BindText(1, username)
+	defer stmt.Finalize()
 
 	_, err = stmt.Step()
 	if err != nil {

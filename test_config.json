@@ -1,7 +1,20 @@
 {
   "LastUpdated": 100,
-  "Middleware": [{ "Type": "logger", "Params": {} }],
+  "Middleware": [
+    { "Type": "logger", "Params": {} },
+    { "Type": "auth", "Params": { "Path": "/auth" } }
+  ],
   "Routes": [
+    {
+      "Route": "/auth",
+      "Id": "auth",
+      "Resource": {
+        "Type": "auth",
+        "Params": {
+          "LoginPage": "pages/auth/login.html"
+        }
+      }
+    },
     {
       "Route": "/info",
       "Id": "info",
@@ -21,6 +34,7 @@
     {
       "Route": "/code",
       "Id": "resources",
+      "AccessRoles": ["admin"],
       "Resource": {
         "Type": "directory",
         "Params": {
@@ -60,11 +74,5 @@
       }
     }
   ],
-  "Services": [
-    {
-      "Id": "test",
-      "Remote": "https://github.com/docker/getting-started-todo-app.git",
-      "CommitHash": "42585d57bbbbe3f576dae92c8d57c5761a6bec7a"
-    }
-  ]
+  "Services": []
 }

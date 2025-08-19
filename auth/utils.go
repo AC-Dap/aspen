@@ -28,7 +28,7 @@ func getConnection() (*sqlite.Conn, func(), error) {
 
 // parseTimestamp parses a timestamp string from the database.
 func parseTimestamp(ts string) (time.Time, error) {
-	t, err := time.Parse("2006-01-02 15:04:05", ts)
+	t, err := time.Parse(time.DateTime, ts)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("failed to parse timestamp: %w", err)
 	}

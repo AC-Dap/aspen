@@ -5,9 +5,10 @@ import (
 )
 
 func RegisterResources() {
-	config.RegisterResourceConstructor[StaticFileParams]("static_file", NewStaticFile)
-	config.RegisterResourceConstructor[StaticDirectoryParams]("directory", NewStaticDirectory)
-	config.RegisterResourceConstructor[RouterAPIParams]("api", NewRouterAPIResource)
-	config.RegisterResourceConstructor[RedirectParams]("redirect", NewRedirectResource)
-	config.RegisterResourceConstructor[ProxyParams]("proxy", NewProxyResource)
+	config.RegisterResourceConstructor("static_file", NewStaticFile)
+	config.RegisterResourceConstructor("directory", NewStaticDirectory)
+	config.RegisterResourceConstructor("api", NewRouterAPIResource)
+	config.RegisterResourceConstructor("auth", NewAuthResource)
+	config.RegisterResourceConstructor("redirect", NewRedirectResource)
+	config.RegisterResourceConstructor("proxy", NewProxyResource)
 }

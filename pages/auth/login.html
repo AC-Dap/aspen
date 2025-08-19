@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Auth Endpoint Tester</title>
+        <style>
+            body {
+                font-family: sans-serif;
+                margin: 2rem;
+            }
+            form {
+                margin-bottom: 1.5rem;
+                padding: 1rem;
+                border: 1px solid #ccc;
+                border-radius: 6px;
+            }
+            label {
+                display: block;
+                margin-top: 0.5rem;
+            }
+            button {
+                margin-top: 0.5rem;
+            }
+            pre {
+                background: #f9f9f9;
+                padding: 1rem;
+                border-radius: 6px;
+                white-space: pre-wrap;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Auth Endpoint Tester</h1>
+
+        <!-- Create User -->
+        <form id="createForm">
+            <h2>Create User</h2>
+            <label
+                >Username: <input type="text" name="username" required
+            /></label>
+            <label
+                >Password: <input type="password" name="password" required
+            /></label>
+            <button type="submit">Create User</button>
+        </form>
+
+        <!-- Login -->
+        <form id="loginForm">
+            <h2>Login</h2>
+            <label
+                >Username: <input type="text" name="username" required
+            /></label>
+            <label
+                >Password: <input type="password" name="password" required
+            /></label>
+            <button type="submit">Login</button>
+        </form>
+
+        <!-- Logout -->
+        <form id="logoutForm">
+            <h2>Logout</h2>
+            <button type="submit">Logout</button>
+        </form>
+
+        <h2>Response</h2>
+        <pre id="responseBox">No response yet.</pre>
+
+        <script>
+            async function sendRequest(url, data = null) {
+                try {
+                    const res = await fetch(url, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include", // important if backend sets cookies
+                        body: data ? JSON.stringify(data) : null,
+                    });
+                    const text = await res.text();
+                    document.getElementById("responseBox").textContent = text;
+                } catch (err) {
+                    document.getElementById("responseBox").textContent =
+                        "Error: " + err;
+                }
+            }
+
+            document
+                .getElementById("createForm")
+                .addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    const { username, password } = e.target;
+                    sendRequest("/auth/create_user", {
+                        username: username.value,
+                        password: password.value,
+                    });
+                });
+
+            document
+                .getElementById("loginForm")
+                .addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    const { username, password } = e.target;
+                    sendRequest("/auth/login", {
+                        username: username.value,
+                        password: password.value,
+                    });
+                });
+
+            document
+                .getElementById("logoutForm")
+                .addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    sendRequest("/auth/logout");
+                });
+        </script>
+    </body>
+</html>

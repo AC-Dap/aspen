@@ -37,7 +37,7 @@ func verifyTimestamp(p postParams, config *config.Config) error {
 	return nil
 }
 
-// Adds API routes that allow querying and updating the router config.
+// AddHandlers adds API routes that allow querying and updating the router config.
 func (ur *RouterAPIResource) AddHandlers(path string, r *router.RouterInstance) error {
 	/*
 		 	* GET middleware: Array of strings

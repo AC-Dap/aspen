@@ -62,7 +62,7 @@ func AvailableMiddleware() []string {
 func (m MiddlewareConfig) Parse() (router.Middleware, error) {
 	parser, ok := globalMiddlewareMap[m.Type]
 	if !ok {
-		return nil, fmt.Errorf("unable to find \"%s\" middleware constructor", m)
+		return nil, fmt.Errorf("unable to find \"%s\" middleware constructor", m.Type)
 	}
 
 	// Try parsing

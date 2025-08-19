@@ -19,12 +19,12 @@ func CreateUser(username, password string) error {
 	defer cleanup()
 
 	// Generate salt and hash password
-	salt, err := GenerateSalt()
+	salt, err := generateSalt()
 	if err != nil {
 		return fmt.Errorf("failed to generate salt: %w", err)
 	}
 
-	passwordHash, err := HashPassword(password, salt)
+	passwordHash, err := hashPassword(password, salt)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
@@ -37,6 +37,7 @@ func CreateUser(username, password string) error {
 	stmt.BindText(1, username)
 	stmt.BindText(2, passwordHash)
 	stmt.BindText(3, salt)
+	defer stmt.Finalize()
 
 	_, err = stmt.Step()
 	if err != nil {
@@ -60,6 +61,7 @@ func VerifyUserCredentials(username, password string) error {
 		WHERE username = ?
 	`)
 	stmt.BindText(1, username)
+	defer stmt.Finalize()
 
 	if hasRow, err := stmt.Step(); err != nil {
 		return fmt.Errorf("failed to query user: %w", err)
@@ -71,7 +73,7 @@ func VerifyUserCredentials(username, password string) error {
 	salt := stmt.ColumnText(1)
 
 	// Verify password
-	isValid, err := VerifyPassword(password, passwordHash, salt)
+	isValid, err := verifyPassword(password, passwordHash, salt)
 	if err != nil {
 		return fmt.Errorf("failed to verify password: %w", err)
 	}
@@ -92,6 +94,7 @@ func DeleteUser(username string) error {
 
 	stmt := conn.Prep(`DELETE FROM users WHERE username = ?`)
 	stmt.BindText(1, username)
+	defer stmt.Finalize()
 
 	_, err = stmt.Step()
 	if err != nil {
@@ -114,6 +117,7 @@ func ListUsers(dbPath string) ([]*User, error) {
 		FROM users
 		ORDER BY username
 	`)
+	defer stmt.Finalize()
 
 	var users []*User
 	for {

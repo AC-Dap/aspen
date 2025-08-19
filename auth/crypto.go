@@ -10,21 +10,21 @@ import (
 )
 
 const (
-	SaltLength  = 32
-	HashLength  = 32
-	TokenLength = 32
+	saltLength  = 32
+	hashLength  = 32
+	tokenLength = 32
 )
 
 // Argon2 parameters
 const (
-	Time    = 1
-	Memory  = 64 * 1024 // 64 MB
-	Threads = 4
+	argon2_time    = 1
+	argon2_memory  = 64 * 1024 // 64 MB
+	argon2_threads = 4
 )
 
-// GenerateSalt creates a random salt for password hashing
-func GenerateSalt() (string, error) {
-	salt := make([]byte, SaltLength)
+// generateSalt creates a random salt for password hashing
+func generateSalt() (string, error) {
+	salt := make([]byte, saltLength)
 	_, err := rand.Read(salt)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate salt: %w", err)
@@ -32,29 +32,29 @@ func GenerateSalt() (string, error) {
 	return base64.StdEncoding.EncodeToString(salt), nil
 }
 
-// HashPassword creates a hash of the password using PBKDF2 with the provided salt
-func HashPassword(password, salt string) (string, error) {
+// hashPassword creates a hash of the password using PBKDF2 with the provided salt
+func hashPassword(password, salt string) (string, error) {
 	saltBytes, err := base64.StdEncoding.DecodeString(salt)
 	if err != nil {
 		return "", fmt.Errorf("failed to decode salt: %w", err)
 	}
 
-	hash := argon2.IDKey([]byte(password), saltBytes, Time, Memory, Threads, HashLength)
+	hash := argon2.IDKey([]byte(password), saltBytes, argon2_time, argon2_memory, argon2_threads, hashLength)
 	return hex.EncodeToString(hash), nil
 }
 
-// VerifyPassword checks if the provided password matches the stored hash and salt
-func VerifyPassword(password, storedHash, salt string) (bool, error) {
-	computedHash, err := HashPassword(password, salt)
+// verifyPassword checks if the provided password matches the stored hash and salt
+func verifyPassword(password, storedHash, salt string) (bool, error) {
+	computedHash, err := hashPassword(password, salt)
 	if err != nil {
 		return false, err
 	}
 	return computedHash == storedHash, nil
 }
 
-// GenerateAccessToken creates a secure random access token
-func GenerateAccessToken() (string, error) {
-	token := make([]byte, TokenLength)
+// generateAccessToken creates a secure random access token
+func generateAccessToken() (string, error) {
+	token := make([]byte, tokenLength)
 	_, err := rand.Read(token)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate access token: %w", err)

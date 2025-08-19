@@ -21,6 +21,7 @@ func AssignRoleToUser(username, role string) error {
 	`)
 	stmt.BindText(1, username)
 	stmt.BindText(2, role)
+	defer stmt.Finalize()
 
 	_, err = stmt.Step()
 	if err != nil {
@@ -49,6 +50,7 @@ func RemoveRoleFromUser(username, role string) error {
 	`)
 	stmt.BindText(1, username)
 	stmt.BindText(2, role)
+	defer stmt.Finalize()
 
 	_, err = stmt.Step()
 	if err != nil {
@@ -74,6 +76,7 @@ func CheckUserPermissions(username, role string) (bool, error) {
 	`)
 	stmt.BindText(1, username)
 	stmt.BindText(2, role)
+	defer stmt.Finalize()
 
 	if hasRow, err := stmt.Step(); err != nil {
 		return false, fmt.Errorf("failed to check user permissions: %w", err)
@@ -100,6 +103,7 @@ func GetUserRoles(dbPath, username string) ([]string, error) {
 		ORDER BY ur.role
 	`)
 	stmt.BindText(1, username)
+	defer stmt.Finalize()
 
 	var roles []string
 	for {
@@ -131,6 +135,7 @@ func GetUsersWithRole(role string) ([]*User, error) {
 		ORDER BY u.username
 	`)
 	stmt.BindText(1, role)
+	defer stmt.Finalize()
 
 	var users []*User
 	for {
