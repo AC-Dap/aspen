@@ -14,23 +14,61 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
-var serverPort = flag.Int("port", 8080, "the port to open this server on")
-var serviceFolder = flag.String("services", "./services", "the folder to place service files in")
-var authFile = flag.String("auth", "auth.sqlite", "the file to use for authentication storage")
+var serverPort = flag.Int("port", 8080, "The port to open this server on.")
+var serviceFolder = flag.String("services", "./services", "The folder to place service files in.")
+var authFile = flag.String("auth", "auth.sqlite", "The file to use for authentication storage.")
+
+// Logging flags
+var logLevel = flag.String("log-level", "DEBUG", `The logging level to use. From highest to lowest, the levels are:
+	PANIC, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, DISABLED`)
+var loggingOutput = flag.String("out", "", "The output file to log to. Logs to stderr if not provided.")
+
+func parseLoggingLevelString() {
+	switch strings.ToUpper(*logLevel) {
+	case "PANIC":
+		logging.InitializeLogger(zerolog.PanicLevel)
+	case "FATAL":
+		logging.InitializeLogger(zerolog.FatalLevel)
+	case "ERROR":
+		logging.InitializeLogger(zerolog.ErrorLevel)
+	case "WARN":
+		logging.InitializeLogger(zerolog.WarnLevel)
+	case "INFO":
+		logging.InitializeLogger(zerolog.InfoLevel)
+	case "DEBUG":
+		logging.InitializeLogger(zerolog.DebugLevel)
+	case "TRACE":
+		logging.InitializeLogger(zerolog.TraceLevel)
+	case "DISABLED":
+		logging.DisableLogger()
+	default:
+		log.Fatal().Str("log-level", *logLevel).Msg("Invalid log level.")
+	}
+}
 
 func main() {
-	// Init
-	logging.InitializeLogger(zerolog.DebugLevel)
-	logging.AddConsoleOutput(true)
+	flag.Parse()
+
+	// Set up logger before anything else
+	if *loggingOutput == "" {
+		logging.SetOutputToConsole()
+	} else {
+		err := logging.SetOutputToFile(*loggingOutput)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Error opening log file")
+		}
+	}
+	parseLoggingLevelString()
+
 	middleware.RegisterMiddleware()
 	resources.RegisterResources()
-	flag.Parse()
 
 	err := auth.Initialize(*authFile)
 	if err != nil {
@@ -39,7 +77,6 @@ func main() {
 		log.Info().Msg("Authentication initialized successfully")
 	}
 
-	// Set service folder
 	service.SetGlobalFolder(*serviceFolder)
 
 	// Parse config path
