@@ -1,14 +1,16 @@
 package router
 
 import (
+	"aspen/logging"
 	"aspen/router/service"
 	"fmt"
 	"net/http"
 	"sync/atomic"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/rs/zerolog/log"
 )
+
+var lg = logging.NewTaggedLogger("Router")
 
 var GlobalRouter router
 
@@ -40,13 +42,13 @@ func NewRouterInstance(middleware []Middleware, services []*service.Service, res
 		instance.services[service.GetID()] = service
 	}
 
-	log.Info().Msg("Creating resource handlers for new router instance:")
+	lg.Info().Msg("Creating resource handlers for new router instance:")
 	for path, resource := range resources {
 		err := resource.AddHandlers(path, instance)
 		if err != nil {
-			log.Warn().Str("path", path).Err(err).Msg("Error adding handlers")
+			lg.Warn().Str("path", path).Err(err).Msg("Error adding handlers")
 		} else {
-			log.Info().Str("path", path).Str("id", resource.GetID()).Type("resource", resource).Send()
+			lg.Info().Str("path", path).Str("id", resource.GetID()).Type("resource", resource).Send()
 		}
 	}
 
@@ -55,12 +57,12 @@ func NewRouterInstance(middleware []Middleware, services []*service.Service, res
 
 // UpdateRouter swaps the global router instance, and stops the old instance.
 func UpdateRouter(instance *RouterInstance) {
-	log.Info().Msg("Updating global router instance")
+	lg.Info().Msg("Updating global router instance")
 	old := GlobalRouter.router.Swap(instance)
 	if old != nil {
-		log.Info().Msg("Stopping old router instance services")
+		lg.Info().Msg("Stopping old router instance services")
 		if err := old.StopServices(); err != nil {
-			log.Error().Err(err).Msg("Error stopping old router instance services")
+			lg.Error().Err(err).Msg("Error stopping old router instance services")
 		}
 	}
 }
@@ -69,14 +71,14 @@ func UpdateRouter(instance *RouterInstance) {
 func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	router := r.router.Load()
 	if router == nil {
-		log.Fatal().Msg("Router is not initialized")
+		lg.Fatal().Msg("Router is not initialized")
 	}
 
 	router.router.ServeHTTP(w, req)
 }
 
 func (r *router) Shutdown() error {
-	log.Info().Msg("Shutting down global router instance")
+	lg.Info().Msg("Shutting down global router instance")
 	router := r.router.Swap(nil)
 	if router != nil {
 		if err := router.StopServices(); err != nil {

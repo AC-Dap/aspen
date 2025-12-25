@@ -3,8 +3,6 @@ package service
 import (
 	"os"
 	"os/exec"
-
-	"github.com/rs/zerolog/log"
 )
 
 type Repo struct {
@@ -30,11 +28,11 @@ func (gr Repo) runGitCommand(arg ...string) ([]byte, error) {
 }
 
 func (gr Repo) Clone() error {
-	log.Info().Str("folder", gr.folder).Str("remote", gr.remote).Str("commit", gr.commitHash).Msg("Cloning git repo")
+	lg.Info().Str("folder", gr.folder).Str("remote", gr.remote).Str("commit", gr.commitHash).Msg("Cloning git repo")
 
 	// Make folder if it doesn't exist
 	if info, err := os.Stat(gr.folder); err != nil || !info.IsDir() {
-		log.Debug().Str("folder", gr.folder).Msg("Creating folder for git repo")
+		lg.Debug().Str("folder", gr.folder).Msg("Creating folder for git repo")
 		err := os.MkdirAll(gr.folder, 0755)
 		if err != nil {
 			return err

@@ -18,8 +18,9 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
+
+var lg = logging.NewTaggedLogger("Main")
 
 var serverPort = flag.Int("port", 8080, "The port to open this server on.")
 var serviceFolder = flag.String("services", "./services", "The folder to place service files in.")
@@ -33,23 +34,23 @@ var loggingOutput = flag.String("out", "", "The output file to log to. Logs to s
 func parseLoggingLevelString() {
 	switch strings.ToUpper(*logLevel) {
 	case "PANIC":
-		logging.InitializeLogger(zerolog.PanicLevel)
+		logging.SetLoggingLevel(zerolog.PanicLevel)
 	case "FATAL":
-		logging.InitializeLogger(zerolog.FatalLevel)
+		logging.SetLoggingLevel(zerolog.FatalLevel)
 	case "ERROR":
-		logging.InitializeLogger(zerolog.ErrorLevel)
+		logging.SetLoggingLevel(zerolog.ErrorLevel)
 	case "WARN":
-		logging.InitializeLogger(zerolog.WarnLevel)
+		logging.SetLoggingLevel(zerolog.WarnLevel)
 	case "INFO":
-		logging.InitializeLogger(zerolog.InfoLevel)
+		logging.SetLoggingLevel(zerolog.InfoLevel)
 	case "DEBUG":
-		logging.InitializeLogger(zerolog.DebugLevel)
+		logging.SetLoggingLevel(zerolog.DebugLevel)
 	case "TRACE":
-		logging.InitializeLogger(zerolog.TraceLevel)
+		logging.SetLoggingLevel(zerolog.TraceLevel)
 	case "DISABLED":
-		logging.DisableLogger()
+		logging.SetLoggingLevel(zerolog.Disabled)
 	default:
-		log.Fatal().Str("log-level", *logLevel).Msg("Invalid log level.")
+		lg.Fatal().Str("log-level", *logLevel).Msg("Invalid log level.")
 	}
 }
 
@@ -62,7 +63,7 @@ func main() {
 	} else {
 		err := logging.SetOutputToFile(*loggingOutput)
 		if err != nil {
-			log.Fatal().Err(err).Msg("Error opening log file")
+			lg.Fatal().Err(err).Msg("Error opening log file")
 		}
 	}
 	parseLoggingLevelString()
@@ -72,33 +73,33 @@ func main() {
 
 	err := auth.Initialize(*authFile)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Error initializing authentication")
+		lg.Fatal().Err(err).Msg("Error initializing authentication")
 	} else {
-		log.Info().Msg("Authentication initialized successfully")
+		lg.Info().Msg("Authentication initialized successfully")
 	}
 
 	service.SetGlobalFolder(*serviceFolder)
 
 	// Parse config path
 	if len(flag.Args()) == 0 {
-		log.Fatal().Msg("Error: Configuration file path is required. Usage: go run ./aspen.go [flags] <config-file>")
+		lg.Fatal().Msg("Error: Configuration file path is required. Usage: go run ./aspen.go [flags] <config-file>")
 	}
 	configPath := flag.Args()[0]
 	err = config.SetGlobalConfigFile(configPath)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Error setting global config file")
+		lg.Fatal().Err(err).Msg("Error setting global config file")
 	}
 
 	// Load config
 	instance, err := config.ParseGlobalConfig()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Error loading config")
+		lg.Fatal().Err(err).Msg("Error loading config")
 	}
 
 	// Start instance
 	err = instance.BuildAndStartServices()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Error starting services")
+		lg.Fatal().Err(err).Msg("Error starting services")
 	}
 
 	// Init router
@@ -109,20 +110,20 @@ func main() {
 	signal.Notify(quit, os.Interrupt)
 
 	// Start server
-	log.Info().Int("port", *serverPort).Msg("Starting server")
+	lg.Info().Int("port", *serverPort).Msg("Starting server")
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", *serverPort),
 		Handler: &router.GlobalRouter,
 	}
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal().Err(err).Msg("Server failed")
+			lg.Fatal().Err(err).Msg("Server failed")
 		}
 	}()
 
 	// Wait for signal
 	sig := <-quit
-	log.Info().Str("signal", sig.String()).Msg("Received shutdown signal")
+	lg.Info().Str("signal", sig.String()).Msg("Received shutdown signal")
 
 	// Shutdown server and services
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -130,13 +131,13 @@ func main() {
 
 	err = server.Shutdown(ctx)
 	if err != nil {
-		log.Error().Err(err).Msg("Error shutting down server")
+		lg.Error().Err(err).Msg("Error shutting down server")
 	}
 
 	err = router.GlobalRouter.Shutdown()
 	if err != nil {
-		log.Error().Err(err).Msg("Error stopping services")
+		lg.Error().Err(err).Msg("Error stopping services")
 	}
 
-	log.Info().Msg("Server shutdown complete")
+	lg.Info().Msg("Server shutdown complete")
 }

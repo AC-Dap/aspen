@@ -4,8 +4,6 @@ import (
 	"aspen/router"
 	"encoding/json"
 	"fmt"
-
-	"github.com/rs/zerolog/log"
 )
 
 type ResourceConfig struct {
@@ -45,7 +43,7 @@ func RegisterResourceConstructor[P ResourceParams](resourceType string, construc
 		return constructor(base, params), nil
 	}
 
-	log.Debug().Str("resource", resourceType).Msg("Registered resource constructor")
+	lg.Debug().Str("resource", resourceType).Msg("Registered resource constructor")
 	globalResourceMap[resourceType] = parser
 	return nil
 }

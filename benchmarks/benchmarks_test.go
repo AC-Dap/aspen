@@ -6,6 +6,8 @@ import (
 	"aspen/router/service"
 	"net/http"
 	"testing"
+
+	"github.com/rs/zerolog"
 )
 
 // From https://github.com/julienschmidt/go-http-routing-benchmark
@@ -26,7 +28,7 @@ func (m mockResponseWriter) WriteString(s string) (n int, err error) {
 func (m mockResponseWriter) WriteHeader(int) {}
 
 func init() {
-	logging.DisableLogger()
+	logging.SetLoggingLevel(zerolog.Disabled)
 }
 
 func BenchmarkRouter(b *testing.B) {

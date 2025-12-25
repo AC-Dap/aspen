@@ -1,10 +1,13 @@
 package config
 
 import (
+	"aspen/logging"
 	"aspen/router"
 	"aspen/router/service"
 	"fmt"
 )
+
+var lg = logging.NewTaggedLogger("Config")
 
 type Config struct {
 	LastUpdated int64

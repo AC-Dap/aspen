@@ -4,8 +4,6 @@ import (
 	"aspen/router"
 	"encoding/json"
 	"fmt"
-
-	"github.com/rs/zerolog/log"
 )
 
 type MiddlewareConfig struct {
@@ -45,7 +43,7 @@ func RegisterMiddlewareConstructor[P MiddlewareParams](middlewareType string, co
 		return constructor(params), nil
 	}
 
-	log.Debug().Str("middleware", middlewareType).Msg("Registered middleware constructor")
+	lg.Debug().Str("middleware", middlewareType).Msg("Registered middleware constructor")
 	globalMiddlewareMap[middlewareType] = parser
 	return nil
 }

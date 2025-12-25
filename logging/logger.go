@@ -8,17 +8,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func DisableLogger() {
-	zerolog.SetGlobalLevel(zerolog.Disabled)
-}
-
-func InitializeLogger(level zerolog.Level) {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+func SetLoggingLevel(level zerolog.Level) {
 	zerolog.SetGlobalLevel(level)
 }
 
 func SetOutputToConsole() {
-	writer := zerolog.ConsoleWriter{Out: os.Stderr}
+	writer := NewTaggedLoggerWriter(os.Stderr, false)
 	log.Logger = zerolog.New(writer).With().Timestamp().Logger()
 }
 
@@ -32,7 +27,7 @@ func SetOutputToFile(filepath string) error {
 		return fmt.Errorf("unable to open log file: %w", err)
 	}
 
-	writer := zerolog.ConsoleWriter{Out: f, NoColor: true}
+	writer := NewTaggedLoggerWriter(f, true)
 	log.Logger = zerolog.New(writer).With().Timestamp().Logger()
 	return nil
 }
