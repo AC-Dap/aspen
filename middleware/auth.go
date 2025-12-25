@@ -3,6 +3,7 @@ package middleware
 import (
 	"aspen/auth"
 	"aspen/router"
+	"aspen/utils"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -23,11 +24,19 @@ func NewAuth(params AuthParams) router.Middleware {
 	}
 }
 
-func (a *Auth) Handle(res router.BaseResource, w http.ResponseWriter, req *http.Request, ps httprouter.Params) bool {
+func (a *Auth) Handle(
+	res router.BaseResource,
+	trw utils.TrackingResponseWriter,
+	req *http.Request,
+	ps httprouter.Params,
+	remainingMiddleware []router.MiddlewareHandler,
+	requestHandler httprouter.Handle,
+) {
 	// Check if this route is protected
 	if len(res.AccessRoles) == 0 {
 		// No roles required, allow access
-		return true
+		continueRequest(res, trw, req, ps, remainingMiddleware, requestHandler)
+		return
 	}
 
 	token, err := auth.ReadAccessTokenCookie(req)
@@ -37,12 +46,12 @@ func (a *Auth) Handle(res router.BaseResource, w http.ResponseWriter, req *http.
 			valid, err := auth.VerifyAccessToken(token, role)
 			if err == nil && valid {
 				// Token is valid for this role, allow access
-				return true
+				continueRequest(res, trw, req, ps, remainingMiddleware, requestHandler)
+				return
 			}
 		}
 	}
 
 	// If we reach here, the token is either missing or invalid for all roles
-	http.Redirect(w, req, a.Path+"/login", http.StatusFound)
-	return false
+	http.Redirect(trw, req, a.Path+"/login", http.StatusFound)
 }

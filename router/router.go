@@ -3,6 +3,7 @@ package router
 import (
 	"aspen/logging"
 	"aspen/router/service"
+	"aspen/utils"
 	"fmt"
 	"net/http"
 	"sync/atomic"
@@ -20,7 +21,7 @@ type router struct {
 }
 
 type RouterInstance struct {
-	middleware []Middleware
+	middlewareHandlers []MiddlewareHandler
 
 	// Maps service IDs to their respective Service instances.
 	services map[string]*service.Service
@@ -32,9 +33,14 @@ type RouterInstance struct {
 // Creates a new router instance with the provided middleware, services, and resources.
 func NewRouterInstance(middleware []Middleware, services []*service.Service, resources map[string]Resource) *RouterInstance {
 	instance := &RouterInstance{
-		middleware: middleware,
-		services:   make(map[string]*service.Service),
-		router:     httprouter.New(),
+		middlewareHandlers: make([]MiddlewareHandler, len(middleware)),
+		services:           make(map[string]*service.Service),
+		router:             httprouter.New(),
+	}
+
+	// Store middleware handlers
+	for i, m := range middleware {
+		instance.middlewareHandlers[i] = m.Handle
 	}
 
 	// Map services by their ID
@@ -156,16 +162,16 @@ func (r *RouterInstance) StopServices() error {
 
 // Handle assigns a resource and handler to a specific method and path.
 func (r *RouterInstance) Handle(method, path string, resource BaseResource, handle httprouter.Handle) {
-	handleWithMiddleware := func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-		// Execute middleware in the order they were added
-		for _, middleware := range r.middleware {
-			if cont := middleware.Handle(resource, w, req, ps); !cont {
-				return
-			}
-		}
+	if len(r.middlewareHandlers) == 0 {
+		r.router.Handle(method, path, handle)
+		return
+	}
 
-		// Call the resource handler
-		handle(w, req, ps)
+	handleWithMiddleware := func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+		trw := utils.NewTrackingResponseWriter(w)
+
+		// Start recursive chain at head
+		r.middlewareHandlers[0](resource, trw, req, ps, r.middlewareHandlers[1:], handle)
 	}
 
 	r.router.Handle(method, path, handleWithMiddleware)
