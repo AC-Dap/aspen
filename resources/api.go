@@ -350,7 +350,7 @@ func reload(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	}
 
 	// Init router
-	router.UpdateRouter(instance)
+	router.Update(instance)
 
 	w.WriteHeader(http.StatusOK)
 }

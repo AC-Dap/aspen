@@ -55,8 +55,26 @@ func NewRouterInstance(middleware []Middleware, services []*service.Service, res
 	return instance
 }
 
-// UpdateRouter swaps the global router instance, and stops the old instance.
-func UpdateRouter(instance *RouterInstance) {
+// Initialize starts the services of the provided instance, and points
+// the global router to it. Should only be called once.
+func Initialize(instance *RouterInstance) error {
+	lg.Info().Msg("Initializing global router instance")
+
+	err := instance.BuildAndStartServices()
+	if err != nil {
+		return fmt.Errorf("error starting services: %w", err)
+	}
+
+	old := GlobalRouter.router.Swap(instance)
+	if old != nil {
+		return fmt.Errorf("router already has a non-nil instance")
+	}
+
+	return nil
+}
+
+// Update swaps the global router instance, and stops the old instance.
+func Update(instance *RouterInstance) {
 	lg.Info().Msg("Updating global router instance")
 	old := GlobalRouter.router.Swap(instance)
 	if old != nil {
@@ -65,6 +83,19 @@ func UpdateRouter(instance *RouterInstance) {
 			lg.Error().Err(err).Msg("Error stopping old router instance services")
 		}
 	}
+}
+
+// Shutdown stops all the currently running services and clears the router.
+func Shutdown() error {
+	lg.Info().Msg("Shutting down global router instance")
+	router := GlobalRouter.router.Swap(nil)
+	if router != nil {
+		if err := router.StopServices(); err != nil {
+			return fmt.Errorf("error stopping services during shutdown: %v", err)
+		}
+	}
+
+	return nil
 }
 
 // ServeHTTP forwards the request to the current router instance to handle.
@@ -77,18 +108,6 @@ func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	router.router.ServeHTTP(w, req)
 }
 
-func (r *router) Shutdown() error {
-	lg.Info().Msg("Shutting down global router instance")
-	router := r.router.Swap(nil)
-	if router != nil {
-		if err := router.StopServices(); err != nil {
-			return fmt.Errorf("error stopping services during shutdown: %v", err)
-		}
-	}
-
-	return nil
-}
-
 // GetService retrieves a service by its ID from the router instance.
 func (r *RouterInstance) GetService(id string) *service.Service {
 	return r.services[id]
@@ -96,6 +115,7 @@ func (r *RouterInstance) GetService(id string) *service.Service {
 
 // BuildServices builds each service for this router instance.
 func (r *RouterInstance) BuildServices() error {
+	lg.Info().Msg("Building services")
 	for id, service := range r.services {
 		if err := service.Build(); err != nil {
 			return fmt.Errorf("error building service %s: %w", id, err)
@@ -106,6 +126,7 @@ func (r *RouterInstance) BuildServices() error {
 
 // StartServices starts each service for this router instance.
 func (r *RouterInstance) StartServices() error {
+	lg.Info().Msg("Starting services")
 	for id, service := range r.services {
 		if err := service.Start(); err != nil {
 			return fmt.Errorf("error starting service %s: %w", id, err)

@@ -96,14 +96,8 @@ func main() {
 		lg.Fatal().Err(err).Msg("Error loading config")
 	}
 
-	// Start instance
-	err = instance.BuildAndStartServices()
-	if err != nil {
-		lg.Fatal().Err(err).Msg("Error starting services")
-	}
-
 	// Init router
-	router.UpdateRouter(instance)
+	router.Initialize(instance)
 
 	// Add handler for ctrl-c shutdown
 	quit := make(chan os.Signal, 1)
@@ -134,7 +128,7 @@ func main() {
 		lg.Error().Err(err).Msg("Error shutting down server")
 	}
 
-	err = router.GlobalRouter.Shutdown()
+	err = router.Shutdown()
 	if err != nil {
 		lg.Error().Err(err).Msg("Error stopping services")
 	}

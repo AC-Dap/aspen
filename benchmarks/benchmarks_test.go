@@ -43,7 +43,7 @@ func BenchmarkRouter(b *testing.B) {
 	for _, path := range paths {
 		resources[path] = resource
 	}
-	router.UpdateRouter(router.NewRouterInstance(
+	router.Update(router.NewRouterInstance(
 		[]router.Middleware{},
 		[]*service.Service{},
 		resources,
