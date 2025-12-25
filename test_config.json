@@ -1,9 +1,9 @@
 {
   "LastUpdated": 100,
-  "Middleware": [
-    { "Type": "logger", "Params": {} },
-    { "Type": "auth", "Params": { "Path": "/auth" } }
-  ],
+  "Middleware": {
+    "logger": { "Disabled": false, "Params": {} },
+    "auth": { "Disabled": false, "Params": { "Path": "/auth" } }
+  },
   "Routes": [
     {
       "Route": "/auth",

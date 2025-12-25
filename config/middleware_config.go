@@ -6,25 +6,27 @@ import (
 	"fmt"
 )
 
+// We configure middleware as a map from type to MiddlewareConfig
+type AllMiddlewareConfigs map[string]MiddlewareConfig
+
 type MiddlewareConfig struct {
-	Type   string
-	Params map[string]any
+	Disabled bool
+	Params   map[string]any
 }
 
 // Middleware define arbitrary parameters, so the best we can do is `any`.
-type MiddlewareParams = any
-type MiddlewareContructor[P MiddlewareParams] = func(P) router.Middleware
+type MiddlewareParams any
+type MiddlewareContructor[P MiddlewareParams] func(P) router.Middleware
 
 // A parser takes []byte JSON data and parses it using the relevant constructor into a middleware instance.
-type MiddlewareParser = func([]byte) (router.Middleware, error)
-type MiddlewareParsers = map[string]MiddlewareParser
+type MiddlewareParser func([]byte) (router.Middleware, error)
 
-var globalMiddlewareMap = make(MiddlewareParsers)
+var globalMiddlewareParsersMap = make(map[string]MiddlewareParser)
 var globalMiddlewareParamsMap = make(map[string]MiddlewareParams)
 
 func RegisterMiddlewareConstructor[P MiddlewareParams](middlewareType string, constructor MiddlewareContructor[P]) error {
 	// Check if this type alrady exists
-	if _, ok := globalMiddlewareMap[middlewareType]; ok {
+	if _, ok := globalMiddlewareParsersMap[middlewareType]; ok {
 		return fmt.Errorf("\"%s\" middleware constructor has already been registered", middlewareType)
 	}
 
@@ -44,34 +46,51 @@ func RegisterMiddlewareConstructor[P MiddlewareParams](middlewareType string, co
 	}
 
 	lg.Debug().Str("middleware", middlewareType).Msg("Registered middleware constructor")
-	globalMiddlewareMap[middlewareType] = parser
+	globalMiddlewareParsersMap[middlewareType] = parser
 	return nil
 }
 
-// AvailableMiddleware returns a list of all registered middleware names.
+// AvailableMiddleware returns a list of all registered middleware types.
 func AvailableMiddleware() []string {
-	var names = make([]string, 0, len(globalMiddlewareMap))
-	for name := range globalMiddlewareMap {
-		names = append(names, name)
+	var mTypes = make([]string, 0, len(globalMiddlewareParsersMap))
+	for mType := range globalMiddlewareParsersMap {
+		mTypes = append(mTypes, mType)
 	}
-	return names
+	return mTypes
 }
 
-func (m MiddlewareConfig) Parse() (router.Middleware, error) {
-	parser, ok := globalMiddlewareMap[m.Type]
-	if !ok {
-		return nil, fmt.Errorf("unable to find \"%s\" middleware constructor", m.Type)
+func (c AllMiddlewareConfigs) Parse() ([]router.Middleware, error) {
+	// First verify that every registered middleware is present. We want to be explicit
+	// with configurations.
+	for mType := range globalMiddlewareParsersMap {
+		if _, ok := c[mType]; !ok {
+			return nil, fmt.Errorf("config missing for \"%s\" middleware", mType)
+		}
 	}
 
-	// Try parsing
-	rawParams, err := json.Marshal(m.Params)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read \"%s\" parameters", m.Type)
-	}
-	middleware, err := parser(rawParams)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse \"%s\" parameters", m.Type)
+	var middlewares = make([]router.Middleware, 0, len(c))
+	for mType, config := range c {
+		parser, ok := globalMiddlewareParsersMap[mType]
+		if !ok {
+			return nil, fmt.Errorf("unable to find \"%s\" middleware constructor", mType)
+		}
+
+		if config.Disabled {
+			continue
+		}
+
+		// Try parsing
+		rawParams, err := json.Marshal(config.Params)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read \"%s\" parameters", mType)
+		}
+		middleware, err := parser(rawParams)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse \"%s\" parameters", mType)
+		}
+
+		middlewares = append(middlewares, middleware)
 	}
 
-	return middleware, nil
+	return middlewares, nil
 }

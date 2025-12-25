@@ -182,7 +182,7 @@ func get_resource_params(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 
 func set_middleware(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	var body struct {
-		Middleware []config.MiddlewareConfig `json:"middleware"`
+		Middleware config.AllMiddlewareConfigs `json:"middleware"`
 		postParams
 	}
 

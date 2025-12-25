@@ -11,22 +11,13 @@ var lg = logging.NewTaggedLogger("Config")
 
 type Config struct {
 	LastUpdated int64
-	Middleware  []MiddlewareConfig
+	Middleware  AllMiddlewareConfigs
 	Routes      []RouteConfig
 	Services    []ServiceConfig
 }
 
 func (c *Config) GetMiddleware() ([]router.Middleware, error) {
-	var middlewares = make([]router.Middleware, len(c.Middleware))
-	for i, middleware := range c.Middleware {
-		mw, err := middleware.Parse()
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse middleware: %w", err)
-		}
-		middlewares[i] = mw
-	}
-
-	return middlewares, nil
+	return c.Middleware.Parse()
 }
 
 func (c *Config) GetResourceRoutes() (map[string]router.Resource, error) {
