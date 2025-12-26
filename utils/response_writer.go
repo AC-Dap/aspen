@@ -19,14 +19,14 @@ type trackingResponseWriter struct {
 }
 
 func NewTrackingResponseWriter(w http.ResponseWriter) TrackingResponseWriter {
-	return trackingResponseWriter{
+	return &trackingResponseWriter{
 		ResponseWriter:  w,
 		statusCode:      http.StatusOK,
 		wroteStatusCode: false,
 	}
 }
 
-func (t trackingResponseWriter) Write(b []byte) (int, error) {
+func (t *trackingResponseWriter) Write(b []byte) (int, error) {
 	// Implicit 200 only if a final status hasn't been sent yet
 	if !t.wroteStatusCode {
 		t.WriteHeader(http.StatusOK)
@@ -34,7 +34,7 @@ func (t trackingResponseWriter) Write(b []byte) (int, error) {
 	return t.ResponseWriter.Write(b)
 }
 
-func (t trackingResponseWriter) WriteHeader(statusCode int) {
+func (t *trackingResponseWriter) WriteHeader(statusCode int) {
 	if !t.wroteStatusCode && statusCode >= 200 {
 		t.statusCode = statusCode
 		t.wroteStatusCode = true
@@ -43,6 +43,6 @@ func (t trackingResponseWriter) WriteHeader(statusCode int) {
 	t.ResponseWriter.WriteHeader(statusCode)
 }
 
-func (t trackingResponseWriter) Status() int {
+func (t *trackingResponseWriter) Status() int {
 	return t.statusCode
 }

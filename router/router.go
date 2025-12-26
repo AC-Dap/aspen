@@ -58,6 +58,9 @@ func NewRouterInstance(middleware []Middleware, services []*service.Service, res
 		}
 	}
 
+	// Special router handlers
+	instance.router.NotFound = NotFoundHandler{}
+
 	return instance
 }
 
