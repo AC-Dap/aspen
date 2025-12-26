@@ -2,6 +2,7 @@ package benchmarks
 
 import (
 	"aspen/logging"
+	"aspen/middleware"
 	"aspen/router"
 	"aspen/router/service"
 	"net/http"
@@ -31,7 +32,9 @@ func init() {
 	logging.SetLoggingLevel(zerolog.Disabled)
 }
 
-func BenchmarkRouter(b *testing.B) {
+func benchmarkHelper(b *testing.B, middleware []router.Middleware, services []*service.Service) {
+	b.Helper()
+
 	rng := GetRNG()
 	resource := &TestResource{
 		BaseResource: router.NewBaseResource("test", []string{}),
@@ -44,8 +47,8 @@ func BenchmarkRouter(b *testing.B) {
 		resources[path] = resource
 	}
 	router.Update(router.NewRouterInstance(
-		[]router.Middleware{},
-		[]*service.Service{},
+		middleware,
+		services,
 		resources,
 	))
 
@@ -71,4 +74,14 @@ func BenchmarkRouter(b *testing.B) {
 			router.GlobalRouter.ServeHTTP(w, r)
 		}
 	}
+}
+
+func BenchmarkRouter(b *testing.B) {
+	benchmarkHelper(b, []router.Middleware{}, []*service.Service{})
+}
+
+func BenchmarkRouterWithMiddleware(b *testing.B) {
+	benchmarkHelper(b, []router.Middleware{
+		middleware.NewLogger(middleware.LoggerParams{}),
+	}, []*service.Service{})
 }
