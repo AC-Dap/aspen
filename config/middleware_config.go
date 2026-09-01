@@ -12,6 +12,7 @@ type AllMiddlewareConfigs map[string]MiddlewareConfig
 type MiddlewareConfig struct {
 	Disabled bool
 	Params   map[string]any
+	Priority int
 }
 
 // Middleware define arbitrary parameters, so the best we can do is `any`.
@@ -69,6 +70,7 @@ func (c AllMiddlewareConfigs) Parse() ([]router.Middleware, error) {
 	}
 
 	var middlewares = make([]router.Middleware, 0, len(c))
+	var priorities = make([]int, 0, len(c))
 	for mType, config := range c {
 		parser, ok := globalMiddlewareParsersMap[mType]
 		if !ok {
@@ -90,6 +92,20 @@ func (c AllMiddlewareConfigs) Parse() ([]router.Middleware, error) {
 		}
 
 		middlewares = append(middlewares, middleware)
+		priorities = append(priorities, config.Priority)
+	}
+
+	// Sort middlewares by their priorities
+	for i := 0; i < len(middlewares); i++ {
+		for j := i + 1; j < len(middlewares); j++ {
+			if priorities[i] == priorities[j] {
+				return nil, fmt.Errorf("found duplicate priorities %d", priorities[i])
+			}
+			if priorities[i] > priorities[j] {
+				middlewares[i], middlewares[j] = middlewares[j], middlewares[i]
+				priorities[i], priorities[j] = priorities[j], priorities[i]
+			}
+		}
 	}
 
 	return middlewares, nil

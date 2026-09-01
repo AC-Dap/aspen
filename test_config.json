@@ -1,8 +1,8 @@
 {
   "LastUpdated": 100,
   "Middleware": {
-    "logger": { "Disabled": false, "Params": {} },
-    "auth": { "Disabled": false, "Params": { "Path": "/auth" } }
+    "logger": { "Disabled": false, "Params": {}, "Priority": 0 },
+    "auth": { "Disabled": false, "Params": { "Path": "/auth" }, "Priority": 1 }
   },
   "Routes": [
     {

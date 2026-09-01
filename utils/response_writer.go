@@ -2,6 +2,7 @@ package utils
 
 import "net/http"
 
+// TrackingResponseWriter wraps around http.ResponseWriter but surfaces the Status code at any point.
 type TrackingResponseWriter interface {
 	http.ResponseWriter
 	Status() int
