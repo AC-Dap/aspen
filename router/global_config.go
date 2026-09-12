@@ -1,7 +1,7 @@
-package config
+package router
 
 import (
-	"aspen/router"
+	"aspen/config"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -33,20 +33,20 @@ func SetGlobalConfigFile(file string) error {
 }
 
 // ReadGlobalConfig reads the global configuration file and returns the corresponding Config struct.
-func ReadGlobalConfig() (*Config, error) {
+func ReadGlobalConfig() (*config.Config, error) {
 	globalConfigLock.RLock()
 	defer globalConfigLock.RUnlock()
 
 	return readGlobalConfigNoLock()
 }
 
-func readGlobalConfigNoLock() (*Config, error) {
+func readGlobalConfigNoLock() (*config.Config, error) {
 	data, err := os.ReadFile(globalConfigFile)
 	if err != nil {
 		return nil, fmt.Errorf("error reading config file: %w", err)
 	}
 
-	var config Config
+	var config config.Config
 	err = json.Unmarshal(data, &config)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing JSON: %w", err)
@@ -56,13 +56,13 @@ func readGlobalConfigNoLock() (*Config, error) {
 }
 
 // ParseGlobalConfig reads and parses the global configuration file into a router.RouterInstance.
-func ParseGlobalConfig() (*router.RouterInstance, error) {
+func ParseGlobalConfig() (*RouterInstance, error) {
 	config, err := ReadGlobalConfig()
 	if err != nil {
 		return nil, fmt.Errorf("error reading config file: %w", err)
 	}
 
-	instance, err := config.ToRouterInstance()
+	instance, err := NewRouterInstance(*config)
 	if err != nil {
 		return nil, fmt.Errorf("error creating instance: %w", err)
 	}
@@ -71,7 +71,7 @@ func ParseGlobalConfig() (*router.RouterInstance, error) {
 }
 
 // UpdateGlobalConfig updates the global configuration file using the provided updater function.
-func UpdateGlobalConfig(updater func(config *Config) error) error {
+func UpdateGlobalConfig(updater func(config *config.Config) error) error {
 	globalConfigLock.Lock()
 	defer globalConfigLock.Unlock()
 
@@ -85,8 +85,11 @@ func UpdateGlobalConfig(updater func(config *Config) error) error {
 		return fmt.Errorf("error updating config: %w", err)
 	}
 
+	// Bump the version number
+	config.Version = config.Version.NextMinorVersion()
+
 	// Verify that the new config is valid
-	_, err = config.ToRouterInstance()
+	_, err = NewRouterInstance(*config)
 	if err != nil {
 		return fmt.Errorf("new config is not valid: %w", err)
 	}

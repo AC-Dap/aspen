@@ -1,14 +1,14 @@
 package resources
 
 import (
-	"aspen/config"
+	"aspen/router"
 )
 
 func RegisterResources() {
-	config.RegisterResourceConstructor("static_file", NewStaticFile)
-	config.RegisterResourceConstructor("directory", NewStaticDirectory)
-	config.RegisterResourceConstructor("api", NewRouterAPIResource)
-	config.RegisterResourceConstructor("auth", NewAuthResource)
-	config.RegisterResourceConstructor("redirect", NewRedirectResource)
-	config.RegisterResourceConstructor("proxy", NewProxyResource)
+	router.RegisterResourceConstructor("static_file", NewStaticFile)
+	router.RegisterResourceConstructor("directory", NewStaticDirectory)
+	router.RegisterResourceConstructor("api", NewRouterAPIResource)
+	router.RegisterResourceConstructor("auth", NewAuthResource)
+	router.RegisterResourceConstructor("redirect", NewRedirectResource)
+	router.RegisterResourceConstructor("proxy", NewProxyResource)
 }

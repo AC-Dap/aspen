@@ -29,7 +29,7 @@ func (a *Auth) Handle(
 	trw utils.TrackingResponseWriter,
 	req *http.Request,
 	ps httprouter.Params,
-	remainingMiddleware []router.MiddlewareHandler,
+	remainingMiddleware []router.Middleware,
 	requestHandler httprouter.Handle,
 ) {
 	// Check if this route is protected

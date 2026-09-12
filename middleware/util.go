@@ -13,12 +13,12 @@ func continueRequest(
 	trw utils.TrackingResponseWriter,
 	req *http.Request,
 	ps httprouter.Params,
-	remainingMiddleware []router.MiddlewareHandler,
+	remainingMiddleware []router.Middleware,
 	requestHandler httprouter.Handle,
 ) {
 	if len(remainingMiddleware) == 0 {
 		requestHandler(trw, req, ps)
 	} else {
-		remainingMiddleware[0](res, trw, req, ps, remainingMiddleware[1:], requestHandler)
+		remainingMiddleware[0].Handle(res, trw, req, ps, remainingMiddleware[1:], requestHandler)
 	}
 }

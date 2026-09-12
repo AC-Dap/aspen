@@ -27,7 +27,7 @@ func (l *Logger) Handle(
 	trw utils.TrackingResponseWriter,
 	req *http.Request,
 	ps httprouter.Params,
-	remainingMiddleware []router.MiddlewareHandler,
+	remainingMiddleware []router.Middleware,
 	requestHandler httprouter.Handle,
 ) {
 	lg.Info().Str("method", req.Method).Str("path", req.URL.Path).Str("resource", res.GetID()).Msg("Request received")

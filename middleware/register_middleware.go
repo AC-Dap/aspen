@@ -1,8 +1,8 @@
 package middleware
 
-import "aspen/config"
+import "aspen/router"
 
 func RegisterMiddleware() {
-	config.RegisterMiddlewareConstructor("logger", NewLogger)
-	config.RegisterMiddlewareConstructor("auth", NewAuth)
+	router.RegisterMiddlewareConstructor("logger", NewLogger)
+	router.RegisterMiddlewareConstructor("auth", NewAuth)
 }

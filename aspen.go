@@ -2,7 +2,6 @@ package main
 
 import (
 	"aspen/auth"
-	"aspen/config"
 	"aspen/logging"
 	"aspen/middleware"
 	"aspen/resources"
@@ -85,13 +84,13 @@ func main() {
 		lg.Fatal().Msg("Error: Configuration file path is required. Usage: go run ./aspen.go [flags] <config-file>")
 	}
 	configPath := flag.Args()[0]
-	err = config.SetGlobalConfigFile(configPath)
+	err = router.SetGlobalConfigFile(configPath)
 	if err != nil {
 		lg.Fatal().Err(err).Msg("Error setting global config file")
 	}
 
 	// Load config
-	instance, err := config.ParseGlobalConfig()
+	instance, err := router.ParseGlobalConfig()
 	if err != nil {
 		lg.Fatal().Err(err).Msg("Error loading config")
 	}

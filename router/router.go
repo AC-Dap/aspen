@@ -1,6 +1,7 @@
 package router
 
 import (
+	"aspen/config"
 	"aspen/logging"
 	"aspen/router/service"
 	"aspen/utils"
@@ -21,7 +22,9 @@ type router struct {
 }
 
 type RouterInstance struct {
-	middlewareHandlers []MiddlewareHandler
+	Config config.Config
+
+	middleware []Middleware
 
 	// Maps service IDs to their respective Service instances.
 	services map[string]*service.Service
@@ -30,22 +33,41 @@ type RouterInstance struct {
 	router *httprouter.Router
 }
 
-// Creates a new router instance with the provided middleware, services, and resources.
-func NewRouterInstance(middleware []Middleware, services []*service.Service, resources map[string]Resource) *RouterInstance {
-	instance := &RouterInstance{
-		middlewareHandlers: make([]MiddlewareHandler, len(middleware)),
-		services:           make(map[string]*service.Service),
-		router:             httprouter.New(),
+// NewRouterInstance creates a new router instance from the provided config
+func NewRouterInstance(c config.Config) (*RouterInstance, error) {
+	if !c.Version.IsCompatibleVersion() {
+		return nil, fmt.Errorf("incompatible version: expected major version %d, got %d", config.MAJOR_VERSION, c.Version.Major)
 	}
 
-	// Store middleware handlers
-	for i, m := range middleware {
-		instance.middlewareHandlers[i] = m.Handle
+	middleware, err := ParseMiddleware(c.Middleware)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing middleware: %w", err)
+	}
+
+	resources := make(map[string]Resource)
+	for _, routeConfig := range c.Routes {
+		resource, err := ParseRoute(routeConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing route: %w", err)
+		}
+		resources[routeConfig.Route] = resource
 	}
 
 	// Map services by their ID
-	for _, service := range services {
-		instance.services[service.GetID()] = service
+	services := make(map[string]*service.Service)
+	for _, serviceConfig := range c.Services {
+		svc, err := service.ParseService(serviceConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing service: %w", err)
+		}
+		services[svc.GetID()] = svc
+	}
+
+	instance := &RouterInstance{
+		Config:     c,
+		middleware: middleware,
+		services:   services,
+		router:     httprouter.New(),
 	}
 
 	lg.Info().Msg("Creating resource handlers for new router instance:")
@@ -61,7 +83,7 @@ func NewRouterInstance(middleware []Middleware, services []*service.Service, res
 	// Special router handlers
 	instance.router.NotFound = NotFoundHandler{}
 
-	return instance
+	return instance, nil
 }
 
 // Initialize starts the services of the provided instance, and points
@@ -165,7 +187,7 @@ func (r *RouterInstance) StopServices() error {
 
 // Handle assigns a resource and handler to a specific method and path.
 func (r *RouterInstance) Handle(method, path string, resource BaseResource, handle httprouter.Handle) {
-	if len(r.middlewareHandlers) == 0 {
+	if len(r.middleware) == 0 {
 		r.router.Handle(method, path, handle)
 		return
 	}
@@ -174,7 +196,7 @@ func (r *RouterInstance) Handle(method, path string, resource BaseResource, hand
 		trw := utils.NewTrackingResponseWriter(w)
 
 		// Start recursive chain at head
-		r.middlewareHandlers[0](resource, trw, req, ps, r.middlewareHandlers[1:], handle)
+		r.middleware[0].Handle(resource, trw, req, ps, r.middleware[1:], handle)
 	}
 
 	r.router.Handle(method, path, handleWithMiddleware)

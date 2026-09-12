@@ -1,10 +1,6 @@
 package config
 
-import (
-	"aspen/router"
-	"encoding/json"
-	"fmt"
-)
+import "fmt"
 
 // We configure middleware as a map from type to MiddlewareConfig
 type AllMiddlewareConfigs map[string]MiddlewareConfig
@@ -17,91 +13,37 @@ type MiddlewareConfig struct {
 
 // Middleware define arbitrary parameters, so the best we can do is `any`.
 type MiddlewareParams any
-type MiddlewareContructor[P MiddlewareParams] func(P) router.Middleware
 
-// A parser takes []byte JSON data and parses it using the relevant constructor into a middleware instance.
-type MiddlewareParser func([]byte) (router.Middleware, error)
+var globalMiddlewareParamsMap = make(map[string]MiddlewareParams)
 
-var globalMiddlewareParsersMap = make(map[string]MiddlewareParser)
-
-func RegisterMiddlewareConstructor[P MiddlewareParams](middlewareType string, constructor MiddlewareContructor[P]) error {
-	// Check if this type alrady exists
-	if _, ok := globalMiddlewareParsersMap[middlewareType]; ok {
-		return fmt.Errorf("\"%s\" middleware constructor has already been registered", middlewareType)
+// RegisterMiddlewareSchema saves the mapping from middlewareType to params
+func RegisterMiddlewareSchema[P ResourceParams](middlewareType string) error {
+	if _, ok := globalMiddlewareParamsMap[middlewareType]; ok {
+		return fmt.Errorf("\"%s\" middleware schema has already been registered", middlewareType)
 	}
 
-	// Create parser function
-	parser := func(rawJson []byte) (router.Middleware, error) {
-		var params P
-		err := json.Unmarshal(rawJson, &params)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing \"%s\" params: %w", middlewareType, err)
-		}
+	// Save the parameters type for this resource
+	var params P
+	globalMiddlewareParamsMap[middlewareType] = params
 
-		return constructor(params), nil
-	}
-
-	lg.Debug().Str("middleware", middlewareType).Msg("Registered middleware constructor")
-	globalMiddlewareParsersMap[middlewareType] = parser
+	lg.Debug().Str("type", middlewareType).Interface("params", params).Msg("Registered middleware schema")
 	return nil
 }
 
 // AvailableMiddleware returns a list of all registered middleware types.
 func AvailableMiddleware() []string {
-	var mTypes = make([]string, 0, len(globalMiddlewareParsersMap))
-	for mType := range globalMiddlewareParsersMap {
-		mTypes = append(mTypes, mType)
+	var names = make([]string, 0, len(globalMiddlewareParamsMap))
+	for name := range globalMiddlewareParamsMap {
+		names = append(names, name)
 	}
-	return mTypes
+	return names
 }
 
-func (c AllMiddlewareConfigs) Parse() ([]router.Middleware, error) {
-	// First verify that every registered middleware is present. We want to be explicit
-	// with configurations.
-	for _, mType := range AvailableMiddleware() {
-		if _, ok := c[mType]; !ok {
-			return nil, fmt.Errorf("config missing for \"%s\" middleware", mType)
-		}
+// GetMiddlewareParams retrieves the parameters for a given middleware type.
+func GetMiddlewareParams(middlewareType string) (ResourceParams, error) {
+	params, ok := globalMiddlewareParamsMap[middlewareType]
+	if !ok {
+		return nil, fmt.Errorf("unable to find \"%s\" middleware parameters", middlewareType)
 	}
-
-	var middlewares = make([]router.Middleware, 0, len(c))
-	var priorities = make([]int, 0, len(c))
-	for mType, config := range c {
-		parser, ok := globalMiddlewareParsersMap[mType]
-		if !ok {
-			return nil, fmt.Errorf("unable to find \"%s\" middleware constructor", mType)
-		}
-
-		if config.Disabled {
-			continue
-		}
-
-		// Try parsing
-		rawParams, err := json.Marshal(config.Params)
-		if err != nil {
-			return nil, fmt.Errorf("unable to read \"%s\" parameters", mType)
-		}
-		middleware, err := parser(rawParams)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse \"%s\" parameters", mType)
-		}
-
-		middlewares = append(middlewares, middleware)
-		priorities = append(priorities, config.Priority)
-	}
-
-	// Sort middlewares by their priorities
-	for i := 0; i < len(middlewares); i++ {
-		for j := i + 1; j < len(middlewares); j++ {
-			if priorities[i] == priorities[j] {
-				return nil, fmt.Errorf("found duplicate priorities %d", priorities[i])
-			}
-			if priorities[i] > priorities[j] {
-				middlewares[i], middlewares[j] = middlewares[j], middlewares[i]
-				priorities[i], priorities[j] = priorities[j], priorities[i]
-			}
-		}
-	}
-
-	return middlewares, nil
+	return params, nil
 }

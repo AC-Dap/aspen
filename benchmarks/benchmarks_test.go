@@ -1,11 +1,12 @@
 package benchmarks
 
 import (
+	"aspen/config"
 	"aspen/logging"
 	"aspen/middleware"
 	"aspen/router"
-	"aspen/router/service"
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/rs/zerolog"
@@ -32,25 +33,39 @@ func init() {
 	logging.SetLoggingLevel(zerolog.Disabled)
 }
 
-func benchmarkHelper(b *testing.B, middleware []router.Middleware, services []*service.Service) {
+func benchmarkHelper(b *testing.B, middlewareConfigs config.AllMiddlewareConfigs) {
 	b.Helper()
 
 	rng := GetRNG()
-	resource := &TestResource{
-		BaseResource: router.NewBaseResource("test", []string{}),
+	router.RegisterResourceConstructor("test", NewTestResource)
+	resourceConfig := config.ResourceConfig{
+		Type:   "test",
+		Params: make(map[string]any),
 	}
 
 	// Set up router with paths
 	paths := GenerateRandomPaths(rng, 1000)
-	resources := make(map[string]router.Resource)
-	for _, path := range paths {
-		resources[path] = resource
+	routeConfigs := make([]config.RouteConfig, 1000)
+	for i, path := range paths {
+		routeConfigs[i] = config.RouteConfig{
+			Id:          strconv.Itoa(i),
+			Route:       path,
+			AccessRoles: make([]string, 0),
+			Resource:    resourceConfig,
+		}
 	}
-	router.Update(router.NewRouterInstance(
-		middleware,
-		services,
-		resources,
-	))
+
+	config := config.Config{
+		Version:    config.VersionNumber{Major: config.MAJOR_VERSION, Minor: 0},
+		Middleware: middlewareConfigs,
+		Routes:     routeConfigs,
+		Services:   make([]config.ServiceConfig, 0),
+	}
+	routerInstance, err := router.NewRouterInstance(config)
+	if err != nil {
+		b.Fatalf("error parsing config: %v", err)
+	}
+	router.Update(routerInstance)
 
 	// Sample paths to get the requests we'll be benchmarking
 	requests := make([]int, 10000)
@@ -77,11 +92,18 @@ func benchmarkHelper(b *testing.B, middleware []router.Middleware, services []*s
 }
 
 func BenchmarkRouter(b *testing.B) {
-	benchmarkHelper(b, []router.Middleware{}, []*service.Service{})
+	benchmarkHelper(b, make(config.AllMiddlewareConfigs))
 }
 
 func BenchmarkRouterWithMiddleware(b *testing.B) {
-	benchmarkHelper(b, []router.Middleware{
-		middleware.NewLogger(middleware.LoggerParams{}),
-	}, []*service.Service{})
+	// TODO: Ues test middleware instead
+	router.RegisterMiddlewareConstructor("logger", middleware.NewLogger)
+
+	middlewareConfigs := make(config.AllMiddlewareConfigs)
+	middlewareConfigs["logger"] = config.MiddlewareConfig{
+		Disabled: false,
+		Params:   make(map[string]any),
+		Priority: 0,
+	}
+	benchmarkHelper(b, middlewareConfigs)
 }

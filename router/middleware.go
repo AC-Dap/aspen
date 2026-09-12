@@ -12,7 +12,7 @@ type MiddlewareHandler func(
 	utils.TrackingResponseWriter,
 	*http.Request,
 	httprouter.Params,
-	[]MiddlewareHandler,
+	[]Middleware,
 	httprouter.Handle,
 )
 
@@ -25,7 +25,7 @@ type Middleware interface {
 		trw utils.TrackingResponseWriter,
 		req *http.Request,
 		ps httprouter.Params,
-		remainingMiddleware []MiddlewareHandler,
+		remainingMiddleware []Middleware,
 		requestHandler httprouter.Handle,
 	)
 }
